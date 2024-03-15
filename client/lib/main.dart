@@ -98,7 +98,12 @@ class CounterWidgetState extends State<CounterWidget> {
           _dataStream = null;
           return const CircularProgressIndicator();
         } else {
-          return Text('Data: ${snapshot.data?.counter}');
+          return Text(
+            'Data: ${snapshot.data?.counter}',
+            style: const TextStyle(
+              fontFamily: "monospace",
+            ),
+          );
         }
       },
     );

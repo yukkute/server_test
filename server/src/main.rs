@@ -41,10 +41,10 @@ impl MoreOnigiriServices for RsServer {
         _request: Request<DataRequest>,
     ) -> Result<Response<Self::GetDataStream>, Status> {
         let stream = tokio_stream::wrappers::IntervalStream::new(tokio::time::interval(
-            Duration::from_secs(1),
+            Duration::from_millis(1000 / 3),
         ))
         .map(|_| {
-            let counter = rand::thread_rng().gen_range(1..=100);
+            let counter = rand::thread_rng().gen_range(1000..=9999);
             Ok(DataResponse { counter })
         });
 
