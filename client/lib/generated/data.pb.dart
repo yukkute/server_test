@@ -13,8 +13,58 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-class CounterRequest extends $pb.GeneratedMessage {
-  factory CounterRequest({
+class Pong extends $pb.GeneratedMessage {
+  factory Pong({
+    $core.String? port,
+  }) {
+    final $result = create();
+    if (port != null) {
+      $result.port = port;
+    }
+    return $result;
+  }
+  Pong._() : super();
+  factory Pong.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Pong.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Pong', package: const $pb.PackageName(_omitMessageNames ? '' : 'scheme'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'port')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Pong clone() => Pong()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Pong copyWith(void Function(Pong) updates) => super.copyWith((message) => updates(message as Pong)) as Pong;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Pong create() => Pong._();
+  Pong createEmptyInstance() => create();
+  static $pb.PbList<Pong> createRepeated() => $pb.PbList<Pong>();
+  @$core.pragma('dart2js:noInline')
+  static Pong getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Pong>(create);
+  static Pong? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get port => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set port($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPort() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPort() => clearField(1);
+}
+
+class DataRequest extends $pb.GeneratedMessage {
+  factory DataRequest({
     $core.int? version,
   }) {
     final $result = create();
@@ -23,11 +73,11 @@ class CounterRequest extends $pb.GeneratedMessage {
     }
     return $result;
   }
-  CounterRequest._() : super();
-  factory CounterRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory CounterRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  DataRequest._() : super();
+  factory DataRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory DataRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CounterRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'scheme'), createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DataRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'scheme'), createEmptyInstance: create)
     ..a<$core.int>(1, _omitFieldNames ? '' : 'version', $pb.PbFieldType.OU3)
     ..hasRequiredFields = false
   ;
@@ -36,22 +86,22 @@ class CounterRequest extends $pb.GeneratedMessage {
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  CounterRequest clone() => CounterRequest()..mergeFromMessage(this);
+  DataRequest clone() => DataRequest()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  CounterRequest copyWith(void Function(CounterRequest) updates) => super.copyWith((message) => updates(message as CounterRequest)) as CounterRequest;
+  DataRequest copyWith(void Function(DataRequest) updates) => super.copyWith((message) => updates(message as DataRequest)) as DataRequest;
 
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static CounterRequest create() => CounterRequest._();
-  CounterRequest createEmptyInstance() => create();
-  static $pb.PbList<CounterRequest> createRepeated() => $pb.PbList<CounterRequest>();
+  static DataRequest create() => DataRequest._();
+  DataRequest createEmptyInstance() => create();
+  static $pb.PbList<DataRequest> createRepeated() => $pb.PbList<DataRequest>();
   @$core.pragma('dart2js:noInline')
-  static CounterRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CounterRequest>(create);
-  static CounterRequest? _defaultInstance;
+  static DataRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DataRequest>(create);
+  static DataRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.int get version => $_getIZ(0);
@@ -63,8 +113,8 @@ class CounterRequest extends $pb.GeneratedMessage {
   void clearVersion() => clearField(1);
 }
 
-class CounterResponse extends $pb.GeneratedMessage {
-  factory CounterResponse({
+class DataResponse extends $pb.GeneratedMessage {
+  factory DataResponse({
     $core.int? counter,
   }) {
     final $result = create();
@@ -73,11 +123,11 @@ class CounterResponse extends $pb.GeneratedMessage {
     }
     return $result;
   }
-  CounterResponse._() : super();
-  factory CounterResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory CounterResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  DataResponse._() : super();
+  factory DataResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory DataResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CounterResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'scheme'), createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DataResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'scheme'), createEmptyInstance: create)
     ..a<$core.int>(1, _omitFieldNames ? '' : 'counter', $pb.PbFieldType.OU3)
     ..hasRequiredFields = false
   ;
@@ -86,22 +136,22 @@ class CounterResponse extends $pb.GeneratedMessage {
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  CounterResponse clone() => CounterResponse()..mergeFromMessage(this);
+  DataResponse clone() => DataResponse()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  CounterResponse copyWith(void Function(CounterResponse) updates) => super.copyWith((message) => updates(message as CounterResponse)) as CounterResponse;
+  DataResponse copyWith(void Function(DataResponse) updates) => super.copyWith((message) => updates(message as DataResponse)) as DataResponse;
 
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static CounterResponse create() => CounterResponse._();
-  CounterResponse createEmptyInstance() => create();
-  static $pb.PbList<CounterResponse> createRepeated() => $pb.PbList<CounterResponse>();
+  static DataResponse create() => DataResponse._();
+  DataResponse createEmptyInstance() => create();
+  static $pb.PbList<DataResponse> createRepeated() => $pb.PbList<DataResponse>();
   @$core.pragma('dart2js:noInline')
-  static CounterResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CounterResponse>(create);
-  static CounterResponse? _defaultInstance;
+  static DataResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DataResponse>(create);
+  static DataResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.int get counter => $_getIZ(0);

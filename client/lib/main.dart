@@ -3,7 +3,7 @@ import 'package:grpc/grpc.dart';
 
 import 'generated/data.pbgrpc.dart';
 
-DataRequestClient? stub;
+MoreOnigiriServicesClient? stub;
 
 void main() async {
   ClientChannel? channel;
@@ -13,12 +13,45 @@ void main() async {
         options:
             const ChannelOptions(credentials: ChannelCredentials.insecure()));
 
-    stub = DataRequestClient(channel,
-        options: CallOptions(timeout: const Duration(milliseconds: 1000)));
+    stub = MoreOnigiriServicesClient(channel,
+        options: CallOptions(timeout: const Duration(seconds: 1000)));
 
     runApp(const MyApp());
   } catch (e) {
+    // ignore: avoid_print
     print(e);
+  }
+}
+
+class CounterWidget extends StatefulWidget {
+  const CounterWidget({super.key});
+
+  @override
+  CounterWidgetState createState() => CounterWidgetState();
+}
+
+class CounterWidgetState extends State<CounterWidget> {
+  late final Stream<DataResponse> _dataStream;
+
+  @override
+  void initState() {
+    super.initState();
+    final request = DataRequest()..version = 0;
+    _dataStream = stub!.getData(request);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DataResponse>(
+      stream: _dataStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else {
+          return Text('Counter: ${snapshot.data?.counter}');
+        }
+      },
+    );
   }
 }
 
@@ -48,27 +81,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-//int? serverResponse;
-
-Future<int?> sendRequest() async {
-  try {
-    final request = CounterRequest()..version = 0;
-    final response = await stub!.getCounter(request);
-    return response.counter;
-  } catch (e) {
-    print("$e");
-    return null;
-  }
-}
-
 class _MyHomePageState extends State<MyHomePage> {
-  String? _counter;
-
-  void _setRequest() async {
-    _counter = (await sendRequest())?.toString();
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,24 +89,16 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
+      body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
+            Text(
               'Server response:',
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            CounterWidget(),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _setRequest,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }

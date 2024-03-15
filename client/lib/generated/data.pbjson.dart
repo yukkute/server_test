@@ -13,27 +13,39 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
-@$core.Deprecated('Use counterRequestDescriptor instead')
-const CounterRequest$json = {
-  '1': 'CounterRequest',
+@$core.Deprecated('Use pongDescriptor instead')
+const Pong$json = {
+  '1': 'Pong',
+  '2': [
+    {'1': 'port', '3': 1, '4': 1, '5': 9, '10': 'port'},
+  ],
+};
+
+/// Descriptor for `Pong`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List pongDescriptor = $convert.base64Decode(
+    'CgRQb25nEhIKBHBvcnQYASABKAlSBHBvcnQ=');
+
+@$core.Deprecated('Use dataRequestDescriptor instead')
+const DataRequest$json = {
+  '1': 'DataRequest',
   '2': [
     {'1': 'version', '3': 1, '4': 1, '5': 13, '10': 'version'},
   ],
 };
 
-/// Descriptor for `CounterRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List counterRequestDescriptor = $convert.base64Decode(
-    'Cg5Db3VudGVyUmVxdWVzdBIYCgd2ZXJzaW9uGAEgASgNUgd2ZXJzaW9u');
+/// Descriptor for `DataRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List dataRequestDescriptor = $convert.base64Decode(
+    'CgtEYXRhUmVxdWVzdBIYCgd2ZXJzaW9uGAEgASgNUgd2ZXJzaW9u');
 
-@$core.Deprecated('Use counterResponseDescriptor instead')
-const CounterResponse$json = {
-  '1': 'CounterResponse',
+@$core.Deprecated('Use dataResponseDescriptor instead')
+const DataResponse$json = {
+  '1': 'DataResponse',
   '2': [
     {'1': 'counter', '3': 1, '4': 1, '5': 13, '10': 'counter'},
   ],
 };
 
-/// Descriptor for `CounterResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List counterResponseDescriptor = $convert.base64Decode(
-    'Cg9Db3VudGVyUmVzcG9uc2USGAoHY291bnRlchgBIAEoDVIHY291bnRlcg==');
+/// Descriptor for `DataResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List dataResponseDescriptor = $convert.base64Decode(
+    'CgxEYXRhUmVzcG9uc2USGAoHY291bnRlchgBIAEoDVIHY291bnRlcg==');
 

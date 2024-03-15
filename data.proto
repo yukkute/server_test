@@ -2,10 +2,15 @@ syntax = "proto3";
 
 package scheme;
 
-service DataRequest {
-  rpc GetCounter(CounterRequest) returns (CounterResponse);
+import "google/protobuf/empty.proto";
+
+service MoreOnigiriServices {
+  rpc SendPing(google.protobuf.Empty) returns (Pong);
+  rpc GetData(DataRequest) returns (stream DataResponse);
 }
 
-message CounterRequest { uint32 version = 1; }
+message Pong { string port = 1; }
 
-message CounterResponse { uint32 counter = 1; }
+message DataRequest { uint32 version = 1; }
+
+message DataResponse { uint32 counter = 1; }
