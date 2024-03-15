@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package scheme;
+
+service DataRequest {
+  rpc GetCounter(CounterRequest) returns (CounterResponse);
+}
+
+message CounterRequest { uint32 version = 1; }
+
+message CounterResponse { uint32 counter = 1; }
