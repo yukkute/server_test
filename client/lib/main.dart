@@ -1,26 +1,51 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:grpc/grpc.dart';
+import 'package:grpc/grpc.dart' as grpc;
 
 import 'generated/data.pbgrpc.dart';
 
+grpc.ClientChannel? channel;
 MoreOnigiriServicesClient? stub;
+bool isConnected = false;
+
+void tryToConnect() async {
+  try {
+    channel = grpc.ClientChannel(
+      'localhost',
+      port: 8000,
+      options: const grpc.ChannelOptions(
+          credentials: grpc.ChannelCredentials.insecure()),
+      channelShutdownHandler: () {
+        channel = null;
+        stub = null;
+      },
+    );
+
+    stub = MoreOnigiriServicesClient(channel!,
+        options: grpc.CallOptions(timeout: const Duration(seconds: 1000)));
+  } catch (e) {
+    channel = null;
+    stub = null;
+  }
+}
+
+void stayConnected() {
+  Timer.periodic(const Duration(seconds: 1), (Timer t) async {
+    isConnected = (await stub?.sendPing(Empty()))?.port.isNotEmpty ?? false;
+    if (!isConnected) {
+      try {
+        tryToConnect();
+      } finally {}
+    } else {
+      //print("connected");
+    }
+  });
+}
 
 void main() async {
-  ClientChannel? channel;
-  try {
-    channel = ClientChannel('localhost',
-        port: 8000,
-        options:
-            const ChannelOptions(credentials: ChannelCredentials.insecure()));
-
-    stub = MoreOnigiriServicesClient(channel,
-        options: CallOptions(timeout: const Duration(seconds: 1000)));
-
-    runApp(const MyApp());
-  } catch (e) {
-    // ignore: avoid_print
-    print(e);
-  }
+  stayConnected();
+  runApp(const MyApp());
 }
 
 class CounterWidget extends StatefulWidget {
@@ -31,13 +56,37 @@ class CounterWidget extends StatefulWidget {
 }
 
 class CounterWidgetState extends State<CounterWidget> {
-  late final Stream<DataResponse> _dataStream;
+  Stream<DataResponse>? _dataStream;
+  Timer? _timer;
 
   @override
   void initState() {
+    stayConnected();
     super.initState();
-    final request = DataRequest()..version = 0;
-    _dataStream = stub!.getData(request);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void stayConnected() {
+    _timer = Timer.periodic(const Duration(milliseconds: 10), (Timer t) async {
+      if (!isConnected) {
+        _dataStream = null;
+        return;
+      }
+      if (_dataStream == null) {
+        final request = DataRequest()..version = 0;
+        try {
+          _dataStream = stub?.getData(request);
+          setState(() {});
+        } catch (e) {
+          _dataStream = null;
+        }
+      }
+    });
   }
 
   @override
@@ -45,10 +94,11 @@ class CounterWidgetState extends State<CounterWidget> {
     return StreamBuilder<DataResponse>(
       stream: _dataStream,
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
+        if (snapshot.hasError || snapshot.data == null) {
+          _dataStream = null;
+          return const CircularProgressIndicator();
         } else {
-          return Text('Counter: ${snapshot.data?.counter}');
+          return Text('Data: ${snapshot.data?.counter}');
         }
       },
     );
@@ -93,9 +143,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'Server response:',
-            ),
             CounterWidget(),
           ],
         ),

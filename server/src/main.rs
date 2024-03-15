@@ -25,7 +25,10 @@ impl MoreOnigiriServices for RsServer {
         Box<dyn tokio_stream::Stream<Item = Result<DataResponse, Status>> + Send + Sync + 'static>,
     >;
 
-    async fn send_ping(&self, _request: Request<()>) -> Result<Response<Pong>, Status> {
+    async fn send_ping(
+        &self,
+        _request: tonic::Request<scheme::Empty>,
+    ) -> Result<Response<Pong>, Status> {
         let reply = Pong {
             port: self.port.to_string(),
         };

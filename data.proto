@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package scheme;
 
-import "google/protobuf/empty.proto";
+message Empty {}
 
 service MoreOnigiriServices {
-  rpc SendPing(google.protobuf.Empty) returns (Pong);
+  rpc SendPing(Empty) returns (Pong);
   rpc GetData(DataRequest) returns (stream DataResponse);
 }
 

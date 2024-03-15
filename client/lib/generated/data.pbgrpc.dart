@@ -15,37 +15,33 @@ import 'dart:core' as $core;
 import 'package:grpc/service_api.dart' as $grpc;
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'data.pb.dart' as $1;
-import 'google/protobuf/empty.pb.dart' as $0;
+import 'data.pb.dart' as $0;
 
 export 'data.pb.dart';
 
 @$pb.GrpcServiceName('scheme.MoreOnigiriServices')
 class MoreOnigiriServicesClient extends $grpc.Client {
-  static final _$sendPing = $grpc.ClientMethod<$0.Empty, $1.Pong>(
+  static final _$sendPing = $grpc.ClientMethod<$0.Empty, $0.Pong>(
       '/scheme.MoreOnigiriServices/SendPing',
       ($0.Empty value) => value.writeToBuffer(),
-      ($core.List<$core.int> value) => $1.Pong.fromBuffer(value));
-  static final _$getData = $grpc.ClientMethod<$1.DataRequest, $1.DataResponse>(
+      ($core.List<$core.int> value) => $0.Pong.fromBuffer(value));
+  static final _$getData = $grpc.ClientMethod<$0.DataRequest, $0.DataResponse>(
       '/scheme.MoreOnigiriServices/GetData',
-      ($1.DataRequest value) => value.writeToBuffer(),
-      ($core.List<$core.int> value) => $1.DataResponse.fromBuffer(value));
+      ($0.DataRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $0.DataResponse.fromBuffer(value));
 
   MoreOnigiriServicesClient($grpc.ClientChannel channel,
       {$grpc.CallOptions? options,
       $core.Iterable<$grpc.ClientInterceptor>? interceptors})
-      : super(channel, options: options, interceptors: interceptors);
+      : super(channel, options: options,
+        interceptors: interceptors);
 
-  $grpc.ResponseFuture<$1.Pong> sendPing($0.Empty request,
-      {$grpc.CallOptions? options}) {
+  $grpc.ResponseFuture<$0.Pong> sendPing($0.Empty request, {$grpc.CallOptions? options}) {
     return $createUnaryCall(_$sendPing, request, options: options);
   }
 
-  $grpc.ResponseStream<$1.DataResponse> getData($1.DataRequest request,
-      {$grpc.CallOptions? options}) {
-    return $createStreamingCall(
-        _$getData, $async.Stream.fromIterable([request]),
-        options: options);
+  $grpc.ResponseStream<$0.DataResponse> getData($0.DataRequest request, {$grpc.CallOptions? options}) {
+    return $createStreamingCall(_$getData, $async.Stream.fromIterable([request]), options: options);
   }
 }
 
@@ -54,33 +50,30 @@ abstract class MoreOnigiriServicesServiceBase extends $grpc.Service {
   $core.String get $name => 'scheme.MoreOnigiriServices';
 
   MoreOnigiriServicesServiceBase() {
-    $addMethod($grpc.ServiceMethod<$0.Empty, $1.Pong>(
+    $addMethod($grpc.ServiceMethod<$0.Empty, $0.Pong>(
         'SendPing',
         sendPing_Pre,
         false,
         false,
         ($core.List<$core.int> value) => $0.Empty.fromBuffer(value),
-        ($1.Pong value) => value.writeToBuffer()));
-    $addMethod($grpc.ServiceMethod<$1.DataRequest, $1.DataResponse>(
+        ($0.Pong value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.DataRequest, $0.DataResponse>(
         'GetData',
         getData_Pre,
         false,
         true,
-        ($core.List<$core.int> value) => $1.DataRequest.fromBuffer(value),
-        ($1.DataResponse value) => value.writeToBuffer()));
+        ($core.List<$core.int> value) => $0.DataRequest.fromBuffer(value),
+        ($0.DataResponse value) => value.writeToBuffer()));
   }
 
-  $async.Future<$1.Pong> sendPing_Pre(
-      $grpc.ServiceCall call, $async.Future<$0.Empty> request) async {
+  $async.Future<$0.Pong> sendPing_Pre($grpc.ServiceCall call, $async.Future<$0.Empty> request) async {
     return sendPing(call, await request);
   }
 
-  $async.Stream<$1.DataResponse> getData_Pre(
-      $grpc.ServiceCall call, $async.Future<$1.DataRequest> request) async* {
+  $async.Stream<$0.DataResponse> getData_Pre($grpc.ServiceCall call, $async.Future<$0.DataRequest> request) async* {
     yield* getData(call, await request);
   }
 
-  $async.Future<$1.Pong> sendPing($grpc.ServiceCall call, $0.Empty request);
-  $async.Stream<$1.DataResponse> getData(
-      $grpc.ServiceCall call, $1.DataRequest request);
+  $async.Future<$0.Pong> sendPing($grpc.ServiceCall call, $0.Empty request);
+  $async.Stream<$0.DataResponse> getData($grpc.ServiceCall call, $0.DataRequest request);
 }
