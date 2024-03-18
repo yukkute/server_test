@@ -1,11 +1,11 @@
 use crate::{
-    mo_services::{scheme::more_onigiri_services_server::MoreOnigiriServicesServer, GrpcServer},
     multicast::start_multicasting,
+    services::{scheme::more_onigiri_services_server::MoreOnigiriServicesServer, GrpcServer},
 };
 use std::net::{Ipv4Addr, SocketAddr, TcpListener};
 
-mod mo_services;
 mod multicast;
+mod services;
 
 fn get_available_port() -> Option<u16> {
     let Ok(listener) = TcpListener::bind("127.0.0.1:0") else {

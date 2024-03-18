@@ -1,4 +1,4 @@
-use crate::mo_services::scheme::more_onigiri_services_server::MoreOnigiriServices;
+use crate::services::scheme::more_onigiri_services_server::MoreOnigiriServices;
 use futures_util::StreamExt;
 use rand::Rng;
 use scheme::{DataRequest, DataResponse, Pong};
