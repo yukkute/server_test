@@ -1,47 +1,9 @@
 import 'dart:async';
 
+import 'package:client/connection.dart';
 import 'package:flutter/material.dart';
-import 'package:grpc/grpc.dart' as grpc;
 
 import 'generated/data.pbgrpc.dart';
-
-grpc.ClientChannel? channel;
-MoreOnigiriServicesClient? stub;
-bool isConnected = false;
-
-void tryToConnect() async {
-  try {
-    channel = grpc.ClientChannel(
-      'localhost',
-      port: 8000,
-      options: const grpc.ChannelOptions(
-          credentials: grpc.ChannelCredentials.insecure()),
-      channelShutdownHandler: () {
-        channel = null;
-        stub = null;
-      },
-    );
-
-    stub = MoreOnigiriServicesClient(channel!,
-        options: grpc.CallOptions(timeout: const Duration(seconds: 1000)));
-  } catch (e) {
-    channel = null;
-    stub = null;
-  }
-}
-
-void stayConnected() {
-  Timer.periodic(const Duration(seconds: 1), (Timer t) async {
-    isConnected = (await stub?.sendPing(Empty()))?.port.isNotEmpty ?? false;
-    if (!isConnected) {
-      try {
-        tryToConnect();
-      } finally {}
-    } else {
-      //print("connected");
-    }
-  });
-}
 
 void main() async {
   stayConnected();
@@ -73,7 +35,7 @@ class CounterWidgetState extends State<CounterWidget> {
 
   void stayConnected() {
     _timer = Timer.periodic(const Duration(milliseconds: 10), (Timer t) async {
-      if (!isConnected) {
+      if (!connected) {
         _dataStream = null;
         return;
       }
