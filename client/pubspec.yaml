@@ -8,8 +8,10 @@ environment:
 dependencies: 
   cupertino_icons: ^1.0.2
   flutter_rust_bridge: ^2.0.0-dev.28
-  flutter_rust_bridge_utils:
-    path: frb_utils
+  #flutter_rust_bridge_utils:
+  #  path: frb_utils
+  server:
+    path: rust_builder
   freezed_annotation: ^2.4.1
   grpc: ^3.2.4
   network_info_plus: ^4.1.0+1

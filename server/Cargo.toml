@@ -5,6 +5,7 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "staticlib"]
+name = "server"
 
 [dependencies]
 flutter_rust_bridge = "=2.0.0-dev.28"
