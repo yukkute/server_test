@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:grpc/grpc.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
-import 'generated/data.pbgrpc.dart';
+import 'generated/protobuf/data.pbgrpc.dart';
 
 bool connected = false;
 MoreOnigiriServicesClient? stub;
@@ -12,6 +12,8 @@ ClientChannel? _channel;
 
 final info = NetworkInfo();
 InternetAddress? localIp;
+
+int? localPort;
 
 typedef Server = (InternetAddress, int);
 
@@ -87,7 +89,9 @@ Future<void> tryToConnect() async {
   await disconnect();
 
   try {
-    final server = (await findLocalServer())!;
+    //final server = (await findLocalServer())!;
+
+    final Server server = (InternetAddress.loopbackIPv4, localPort!);
 
     _channel = ClientChannel(
       server.$1,

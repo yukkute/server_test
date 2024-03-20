@@ -1,12 +1,26 @@
 import 'dart:async';
 
 import 'package:client/connection.dart';
+import 'package:client/generated/rust/mo_server/local_server.dart';
 import 'package:flutter/material.dart';
 
-import 'generated/data.pbgrpc.dart';
+import 'generated/protobuf/data.pbgrpc.dart';
+import 'generated/rust/frb_generated.dart';
 
 void main() async {
+  // Initialize rust lib
+  await RustLib.init();
+
+  try {
+    // Start local server
+    localPort = await startLocalServer();
+  } catch (e) {
+    print(e);
+  }
+
+  localPort!;
   stayConnected();
+
   runApp(const MyApp());
 }
 

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::net::SocketAddrV4;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::net::UdpSocket;
@@ -47,7 +49,6 @@ pub fn start_multicasting(grpc_port: u16) {
     });
 }
 
-#[allow(dead_code)]
 pub fn stop_multicasting() {
     MULTICASTING_RUNNING.store(false, Ordering::SeqCst);
 }

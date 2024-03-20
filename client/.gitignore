@@ -1,3 +1,7 @@
+frb_utils/
+rust
+rust/
+
 # Miscellaneous
 *.class
 *.log

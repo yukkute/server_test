@@ -1,7 +1,14 @@
 #!/bin/sh
 
-dart pub global activate protoc_plugin
-mkdir ./lib/generated
-protoc -I/usr/include/ --dart_out=grpc:./lib/generated  --proto_path=.. data.proto
+PROTOBUF="lib/generated/protobuf"
 
-echo finished
+dart pub global activate protoc_plugin
+
+rm -rf "$PROTOBUF"
+mkdir -p "$PROTOBUF"
+
+protoc -I/usr/include/ \
+--dart_out="grpc:$PROTOBUF"  \
+--proto_path=.. data.proto
+
+echo "finished" $(basename "$0")

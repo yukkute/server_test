@@ -3,9 +3,11 @@ name = "server"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
+flutter_rust_bridge = "=2.0.0-dev.28"
 futures-util = "0.3.30"
 prost = { version = "0.12.3", default-features = false, features = [
     "prost-derive",
@@ -16,6 +18,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tokio-stream = "0.1.15"
 tonic = "0.11.0"
 tonic-reflection = "0.11.0"
+
 
 [build-dependencies]
 prost-build = "0.12.3"
