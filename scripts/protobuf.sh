@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd ..
+
 cd client
 
 PROTOBUF="lib/generated/protobuf"

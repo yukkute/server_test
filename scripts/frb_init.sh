@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd ..
+
 # Create the symbolic link
 source_dir="./server"
 target_dir="./client/rust"
