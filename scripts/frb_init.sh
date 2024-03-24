@@ -1,11 +1,9 @@
 #!/bin/sh
 
-cd ..
-
 # Create the symbolic link
-source_dir="./server"
-target_dir="./client/rust"
-ln -s "$(readlink -e "$source_dir")" "$target_dir"
+source_dir="server"
+target_dir="client/rust"
+ln -sr "$(readlink -e "$source_dir")" "$target_dir"
 
 cd client
 

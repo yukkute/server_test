@@ -1,7 +1,5 @@
 #!/bin/sh
 
-cd ..
-
 SERVER_GEN="server/src/generated/frb"
 CLIENT_GEN="client/lib/generated/rust"
 
