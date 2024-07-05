@@ -1,24 +1,28 @@
-use std::{cell::RefCell, ops::Deref, rc::Weak};
+use std::{
+    cell::RefCell,
+    ops::Deref,
+    sync::{Arc, Weak},
+};
 
-pub struct Lv<Data>
+pub struct Si<Data>
 where
     Data: PartialEq,
 {
     data: Data,
-    ears: Vec<Box<dyn Callback<Data>>>,
+    slots: Vec<Box<dyn Slot<Data>>>,
 }
 
-impl<Data> Lv<Data>
+impl<Data> Si<Data>
 where
-    Data: PartialEq,
+    Data: PartialEq + 'static,
 {
     pub fn new(data: Data) -> Self {
         Self {
             data,
-            ears: Vec::new(),
+            slots: Vec::new(),
         }
     }
-    
+
     pub fn data(&self) -> &Data {
         &self.data
     }
@@ -29,25 +33,28 @@ where
         }
         self.data = data;
 
-        self.ears.retain(|ear| ear.is_actual());
-        for ear in &self.ears {
-            ear.notify(&self.data);
+        self.slots.retain(|slot| slot.is_active());
+        for ear in &mut self.slots {
+            ear.process_signal(&self.data);
         }
     }
 
-    pub fn add_ear(&mut self, ear: Box<dyn Callback<Data>>) {
-        if !ear.is_actual() {
-            return;
-        };
+    pub fn add_slot<T: 'static>(
+        &mut self,
+        object: Arc<RefCell<T>>,
+        method: impl FnMut(&mut T, &Data) + 'static,
+    ) {
+        let mut closure = Box::new(WeakClosure::<T, Data> {
+            object: Arc::downgrade(&object),
+            method: Box::new(method),
+        });
 
-        // if self.ears.contains(&ear) {return;} // No idea
-
-        ear.notify(&self.data);
-        self.ears.push(ear);
+        closure.process_signal(&self.data);
+        self.slots.push(closure);
     }
 }
 
-impl<Data> Deref for Lv<Data>
+impl<Data> Deref for Si<Data>
 where
     Data: PartialEq,
 {
@@ -58,69 +65,82 @@ where
     }
 }
 
-// impl<Data> Fn() for Lv<Data> {
-//     extern "rust-call" fn call(&self, args: Args) -> Self::Output {
-//         todo!()
-//     }
-// }
-
-pub struct CallbackClosure<T, Data>
+struct WeakClosure<T, Data>
 where
     Data: PartialEq,
 {
     object: Weak<RefCell<T>>,
-    pointer: Box<dyn Fn(&mut T, &Data)>,
+    method: Box<dyn FnMut(&mut T, &Data)>,
 }
 
-/// Use CallbackClosure to add callback
-pub trait Callback<Data> {
-    fn is_actual(&self) -> bool;
-    fn notify(&self, new_data: &Data);
+trait Slot<Data> {
+    fn is_active(&self) -> bool;
+    fn process_signal(&mut self, new_data: &Data);
 }
 
-impl<T, Data> Callback<Data> for CallbackClosure<T, Data>
+impl<T, Data> Slot<Data> for WeakClosure<T, Data>
 where
     Data: PartialEq,
 {
-    fn is_actual(&self) -> bool {
+    fn is_active(&self) -> bool {
         self.object.upgrade().is_some()
     }
 
-    fn notify(&self, data: &Data) {
-        if !self.is_actual() {
+    fn process_signal(&mut self, data: &Data) {
+        if !self.is_active() {
             return;
+        }
+
+        let object = self.object.upgrade().unwrap();
+
+        let mut borrow_result = object.try_borrow_mut();
+        let object_ref: &mut T = match borrow_result {
+            Ok(ref mut r) => r,
+            Err(_) => {
+                let raw_pointer = object.as_ptr();
+                let ref_mut = unsafe { raw_pointer.as_mut().unwrap() };
+                ref_mut
+            }
         };
-        let object = unsafe { self.object.upgrade().unwrap().as_ptr().as_mut().unwrap() };
-        (self.pointer)(object, &data);
+        //
+        // Unsafe usage reason: double borrow can occur when self-listening, case:
+        //
+        // selflistener
+        //   .borrow_mut()
+        //   .lv.add_slot(selflistener.clone(), &SelfListener::method);
+        //
+        // calls selflistener.process_signal()
+        // which otherwise would create a second borrow:
+        //
+        // let ref mut object = object.borrow_mut();
+        //
+        // In that case the double borrow should be fine, as the pointer should not be accessed at the point
+
+        (self.method)(object_ref, &data);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
     use super::*;
 
     struct Fancy {
-        bingo: Lv<i32>,
+        bingo: Si<i32>,
         lucky: bool,
     }
 
     impl Fancy {
-        fn new() -> Rc<RefCell<Fancy>> {
+        fn new() -> Arc<RefCell<Fancy>> {
             let f = Fancy {
-                bingo: Lv::new(0),
+                bingo: Si::new(0),
                 lucky: false,
             };
 
-            let rc = Rc::new(RefCell::new(f));
+            let rc = Arc::new(RefCell::new(f));
 
             rc.borrow_mut()
                 .bingo
-                .add_ear(Box::new(CallbackClosure::<Fancy, i32> {
-                    object: Rc::downgrade(&rc),
-                    pointer: Box::new(&Fancy::check_bingo),
-                }));
+                .add_slot(rc.clone(), &Fancy::check_bingo);
 
             rc
         }
@@ -135,7 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn self_update() {
+    fn self_listening() {
         let x = Fancy::new();
         assert!((*x).borrow().lucky == false);
 
@@ -155,55 +175,46 @@ mod tests {
 
     #[test]
     fn drop_mechanics() {
-        let mut longlive: Lv<i32> = Lv::new(3);
+        let mut longlive: Si<i32> = Si::new(3);
 
         {
             let dull = Dull { val: -1 };
-            let dull_rc = Rc::new(RefCell::new(dull));
+            let dull_rc = Arc::new(RefCell::new(dull));
 
-            longlive.add_ear(Box::new(CallbackClosure::<Dull, i32> {
-                object: Rc::downgrade(&dull_rc),
-                pointer: Box::new(&Dull::go_dull),
-            }));
+            longlive.add_slot(dull_rc.clone(), &Dull::go_dull);
 
             assert_eq!((*dull_rc).borrow().val, 3);
 
-            assert_eq!(longlive.ears.len(), 1);
+            assert_eq!(longlive.slots.len(), 1);
         }
 
         longlive.set(1);
-        assert_eq!(longlive.ears.len(), 0);
+        assert_eq!(longlive.slots.len(), 0);
     }
 
-    struct TwoEars {
-        price: Lv<i32>,
-        quantity: Lv<i32>,
+    struct TwoSlots {
+        price: Si<i32>,
+        quantity: Si<i32>,
         total_cached: i32,
     }
 
-    impl TwoEars {
-        fn new() -> Rc<RefCell<Self>> {
+    impl TwoSlots {
+        fn new() -> Arc<RefCell<Self>> {
             let s = Self {
-                price: Lv::new(10),
-                quantity: Lv::new(5),
+                price: Si::new(10),
+                quantity: Si::new(5),
                 total_cached: -1,
             };
 
-            let rc = Rc::new(RefCell::new(s));
+            let rc = Arc::new(RefCell::new(s));
 
             rc.borrow_mut()
                 .price
-                .add_ear(Box::new(CallbackClosure::<TwoEars, i32> {
-                    object: Rc::downgrade(&rc),
-                    pointer: Box::new(&TwoEars::recache_total),
-                }));
+                .add_slot(rc.clone(), &TwoSlots::recache_total);
 
             rc.borrow_mut()
                 .quantity
-                .add_ear(Box::new(CallbackClosure::<TwoEars, i32> {
-                    object: Rc::downgrade(&rc),
-                    pointer: Box::new(&TwoEars::recache_total),
-                }));
+                .add_slot(rc.clone(), &TwoSlots::recache_total);
 
             rc
         }
@@ -214,8 +225,8 @@ mod tests {
     }
 
     #[test]
-    fn two_ears() {
-        let x = TwoEars::new();
+    fn two_slots() {
+        let x = TwoSlots::new();
         assert!((*x).borrow().total_cached == 50);
 
         x.borrow_mut().quantity.set(7);
