@@ -8,7 +8,7 @@ pub struct Si<Data>
 where
     Data: PartialEq,
 {
-    data: Data,
+    value: Data,
     slots: Vec<Box<dyn Slot<Data>>>,
 }
 
@@ -18,38 +18,38 @@ where
 {
     pub fn new(data: Data) -> Self {
         Self {
-            data,
+            value: data,
             slots: Vec::new(),
         }
     }
 
-    pub fn data(&self) -> &Data {
-        &self.data
+    pub fn value(&self) -> &Data {
+        &self.value
     }
 
     pub fn set(&mut self, data: Data) {
-        if self.data == data {
+        if self.value == data {
             return;
         }
-        self.data = data;
+        self.value = data;
 
         self.slots.retain(|slot| slot.is_active());
         for ear in &mut self.slots {
-            ear.process_signal(&self.data);
+            ear.process_signal(&self.value);
         }
     }
 
     pub fn add_slot<T: 'static>(
         &mut self,
         object: Arc<RefCell<T>>,
-        method: impl FnMut(&mut T, &Data) + 'static,
+        method: impl Fn(&mut T, &Data) + 'static,
     ) {
         let mut closure = Box::new(WeakClosure::<T, Data> {
             object: Arc::downgrade(&object),
             method: Box::new(method),
         });
 
-        closure.process_signal(&self.data);
+        closure.process_signal(&self.value);
         self.slots.push(closure);
     }
 }
@@ -61,7 +61,7 @@ where
     type Target = Data;
 
     fn deref(&self) -> &Self::Target {
-        &self.data
+        &self.value
     }
 }
 
