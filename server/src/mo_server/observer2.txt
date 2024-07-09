@@ -1,0 +1,275 @@
+use std{
+    cellRefCell,
+    opsDeref,
+    sync{Arc, Weak},
+};
+
+use crateinternal;
+
+pub struct SiData
+where
+    Data PartialEq,
+{
+    data Data,
+    slots VecBoxdyn SlotData,
+}
+
+implData SiData
+where
+    Data PartialEq + 'static,
+{
+    pub fn new(data Data) - Self {
+        Self {
+            data,
+            slots Vecnew(),
+        }
+    }
+
+    pub fn data(&self) - &Data {
+        &self.data
+    }
+
+    pub fn set(&mut self, data Data) {
+        if self.data == data {
+            return;
+        }
+        self.data = data;
+
+        self.slots.retain(slot slot.is_active());
+        for ear in &mut self.slots {
+            ear.process_signal(&self.data);
+        }
+    }
+
+    pub fn add_slotT 'static(
+        &mut self,
+        object ArcRefCellT,
+        method impl Fn(&mut T, &Data) + 'static,
+    ) {
+        let mut closure = Boxnew(WeakClosureT, Data {
+            object Arcdowngrade(&object),
+            method Boxnew(method),
+        });
+
+        closure.process_signal(&self.data);
+        self.slots.push(closure);
+    }
+    
+    pub fn add_agnostic_slotT 'static(
+    &mut self,
+    object ArcRefCellT,
+    method impl Fn(&mut T) + 'static,
+) {
+    let mut closure = Boxnew(WeakClosureT, Data {
+        object Arcdowngrade(&object),
+        method Boxnew(move t &mut T, _ &Data (method)(t)),
+    });
+
+    closure.process_signal(&self.data);
+    self.slots.push(closure);
+}
+}
+
+implData Deref for SiData
+where
+    Data PartialEq,
+{
+    type Target = Data;
+
+    fn deref(&self) - &SelfTarget {
+        &self.data
+    }
+}
+
+mod internal {
+
+use super;
+    
+pub trait SlotFunctionT, Data {
+    fn call(&self, object &mut T, data &Data);
+}
+
+implF, T, Data SlotFunctionT, Data for F
+where
+    F Fn(&mut T, &Data),
+{
+
+    fn call(&self, object &mut T, data &Data) {
+        (self)(object, data)
+    }
+}
+
+pub struct WeakClosureT, Data
+where
+    Data PartialEq,
+{
+    pub object WeakRefCellT,
+    pub method Boxdyn SlotFunctionT, Data,
+}
+
+pub trait SlotData {
+    fn is_active(&self) - bool;
+    fn process_signal(&mut self, new_data &Data);
+}
+
+implT, Data SlotData for WeakClosureT, Data
+where
+    Data PartialEq,
+{
+    fn is_active(&self) - bool {
+        self.object.upgrade().is_some()
+    }
+
+    fn process_signal(&mut self, data &Data) {
+        if !self.is_active() {
+            return;
+        }
+
+        let object = self.object.upgrade().unwrap();
+
+        let mut borrow_result = object.try_borrow_mut();
+        let object_ref &mut T = match borrow_result {
+            Ok(ref mut r) = r,
+            Err(_) = {
+                let raw_pointer = object.as_ptr();
+                let ref_mut = unsafe { raw_pointer.as_mut().unwrap() };
+                ref_mut
+            }
+        };
+        
+         Unsafe usage reason double borrow can occur when self-listening, case
+        
+         selflistener
+           .borrow_mut()
+           .lv.add_slot(selflistener.clone(), &SelfListenermethod);
+        
+         calls selflistener.process_signal()
+         which otherwise would create a second borrow
+        
+         let ref mut object = object.borrow_mut();
+        
+         In that case the double borrow should be fine, as the pointer should not be accessed at the point
+
+        self.method.call(object_ref, data);
+    }
+}
+
+}
+    
+
+#[cfg(test)]
+mod tests {
+    use super;
+
+    struct Fancy {
+        bingo Sii32,
+        lucky bool,
+    }
+
+    impl Fancy {
+        fn new() - ArcRefCellFancy {
+            let f = Fancy {
+                bingo Sinew(0),
+                lucky false,
+            };
+
+            let rc = Arcnew(RefCellnew(f));
+
+            rc.borrow_mut()
+                .bingo
+                .add_slot(rc.clone(), &Fancycheck_bingo);
+
+            rc
+        }
+
+        fn check_bingo(&mut self, _ &i32) {
+            if self.bingo == 42 {
+                self.lucky = true
+            } else {
+                self.lucky = false
+            }
+        }
+    }
+
+    #[test]
+    fn self_listening() {
+        let x = Fancynew();
+        assert!((x).borrow().lucky == false);
+
+        x.borrow_mut().bingo.set(42);
+        assert!((x).borrow().lucky == true);
+    }
+
+    struct Dull {
+        val i32,
+    }
+
+    impl Dull {
+        fn go_dull(&mut self) {
+            self.val += 1;
+        }
+    }
+
+    #[test]
+    fn drop_mechanics() {
+        let mut longlive Sii32 = Sinew(3);
+
+        {
+            let dull = Dull { val 100 };
+            let dull_rc = Arcnew(RefCellnew(dull));
+
+            longlive.add_agnostic_slot(dull_rc.clone(), &Dullgo_dull);
+
+            assert_eq!((dull_rc).borrow().val, 101);
+
+            assert_eq!(longlive.slots.len(), 1);
+        }
+
+        longlive.set(1);
+        assert_eq!(longlive.slots.len(), 0);
+    }
+
+    struct TwoSlots {
+        price Sii32,
+        quantity Sii32,
+        total_cached i32,
+    }
+
+    impl TwoSlots {
+        fn new() - ArcRefCellSelf {
+            let s = Self {
+                price Sinew(10),
+                quantity Sinew(5),
+                total_cached -1,
+            };
+
+            let rc = Arcnew(RefCellnew(s));
+
+            rc.borrow_mut()
+                .price
+                .add_slot(rc.clone(), &TwoSlotsrecache_total);
+
+            rc.borrow_mut()
+                .quantity
+                .add_slot(rc.clone(), &TwoSlotsrecache_total);
+
+            rc
+        }
+
+        fn recache_total(&mut self, _ &i32) {
+            self.total_cached = self.price  self.quantity;
+        }
+    }
+
+    #[test]
+    fn two_slots() {
+        let x = TwoSlotsnew();
+        assert!((x).borrow().total_cached == 50);
+
+        x.borrow_mut().quantity.set(7);
+        assert!((x).borrow().total_cached == 70);
+
+        x.borrow_mut().price.set(6);
+        assert!((x).borrow().total_cached == 42);
+    }
+}
