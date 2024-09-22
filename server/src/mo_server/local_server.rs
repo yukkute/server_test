@@ -19,7 +19,7 @@ pub async fn start_local_server() -> Option<u16> {
     //     ↓
     let Ok(reflection_service) = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(include_bytes!("../generated/descriptor.bin"))
-        .build()
+        .build_v1()
     else {
         return None;
     };
