@@ -1,5 +1,8 @@
 #!/bin/sh
 
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd ..
+
 SERVER_GEN="server/src/generated/frb"
 CLIENT_GEN="client/lib/generated/rust"
 
@@ -16,7 +19,7 @@ echo -e "pub mod frb_generated;\n" > "$SERVER_GEN/mod.rs"
 flutter_rust_bridge_codegen generate \
 --no-add-mod-to-lib \
 --rust-root "server" \
---rust-input "server/src/mo_server/local_server.rs" \
+--rust-input "crate::server" \
 --rust-output "$SERVER_GEN/frb_generated.rs" \
 --dart-output "$CLIENT_GEN"
 

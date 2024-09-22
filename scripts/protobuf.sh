@@ -1,6 +1,7 @@
 #!/bin/sh
 
-cd client
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd ../client
 
 PROTOBUF="lib/generated/protobuf"
 

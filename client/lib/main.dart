@@ -4,7 +4,6 @@ import 'package:client/connection.dart';
 import 'package:client/generated/rust/mo_server/local_server.dart';
 import 'package:flutter/material.dart';
 
-import 'generated/protobuf/data.pbgrpc.dart';
 import 'generated/rust/frb_generated.dart';
 
 void main() async {

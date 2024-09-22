@@ -1,9 +1,11 @@
 use std::{
-    cell::RefCell,
     ops::Deref,
-    sync::{Arc, Weak},
+    rc::{Rc, Weak},
 };
 
+use super::mutcell::MutCell;
+
+#[derive(Default)]
 pub struct Si<Data>
 where
     Data: PartialEq,
@@ -41,16 +43,26 @@ where
 
     pub fn add_slot<T: 'static>(
         &mut self,
-        object: Arc<RefCell<T>>,
+        object: Rc<MutCell<T>>,
         method: impl Fn(&mut T, &Data) + 'static,
     ) {
         let mut closure = Box::new(WeakClosure::<T, Data> {
-            object: Arc::downgrade(&object),
+            object: Rc::downgrade(&object),
             method: Box::new(method),
         });
 
         closure.process_signal(&self.value);
         self.slots.push(closure);
+    }
+
+    pub fn add_agnostic_slot<T: 'static>(
+        &mut self,
+        object: Rc<MutCell<T>>,
+        method: impl Fn(&mut T) + 'static,
+    ) {
+        self.add_slot(object, move |obj, _| {
+            method(obj);
+        });
     }
 }
 
@@ -69,7 +81,7 @@ struct WeakClosure<T, Data>
 where
     Data: PartialEq,
 {
-    object: Weak<RefCell<T>>,
+    object: Weak<MutCell<T>>,
     method: Box<dyn FnMut(&mut T, &Data)>,
 }
 
@@ -87,36 +99,11 @@ where
     }
 
     fn process_signal(&mut self, data: &Data) {
-        if !self.is_active() {
+        let Some(object) = self.object.upgrade() else {
             return;
-        }
-
-        let object = self.object.upgrade().unwrap();
-
-        let mut borrow_result = object.try_borrow_mut();
-        let object_ref: &mut T = match borrow_result {
-            Ok(ref mut r) => r,
-            Err(_) => {
-                let raw_pointer = object.as_ptr();
-                let ref_mut = unsafe { raw_pointer.as_mut().unwrap() };
-                ref_mut
-            }
         };
-        //
-        // Unsafe usage reason: double borrow can occur when self-listening, case:
-        //
-        // selflistener
-        //   .borrow_mut()
-        //   .lv.add_slot(selflistener.clone(), &SelfListener::method);
-        //
-        // calls selflistener.process_signal()
-        // which otherwise would create a second borrow:
-        //
-        // let ref mut object = object.borrow_mut();
-        //
-        // In that case the double borrow should be fine, as the pointer should not be accessed at the point
 
-        (self.method)(object_ref, &data);
+        (self.method)(object.get_mut(), &data);
     }
 }
 
@@ -130,17 +117,15 @@ mod tests {
     }
 
     impl Fancy {
-        fn new() -> Arc<RefCell<Fancy>> {
+        fn new() -> Rc<MutCell<Fancy>> {
             let f = Fancy {
                 bingo: Si::new(0),
                 lucky: false,
             };
 
-            let rc = Arc::new(RefCell::new(f));
+            let rc = Rc::new(MutCell::new(f));
 
-            rc.borrow_mut()
-                .bingo
-                .add_slot(rc.clone(), &Fancy::check_bingo);
+            rc.get_mut().bingo.add_slot(rc.clone(), &Fancy::check_bingo);
 
             rc
         }
@@ -157,10 +142,10 @@ mod tests {
     #[test]
     fn self_listening() {
         let x = Fancy::new();
-        assert!((*x).borrow().lucky == false);
+        assert!(x.lucky == false);
 
-        x.borrow_mut().bingo.set(42);
-        assert!((*x).borrow().lucky == true);
+        x.get_mut().bingo.set(42);
+        assert!(x.lucky == true);
     }
 
     struct Dull {
@@ -179,11 +164,11 @@ mod tests {
 
         {
             let dull = Dull { val: -1 };
-            let dull_rc = Arc::new(RefCell::new(dull));
+            let dull_rc = Rc::new(MutCell::new(dull));
 
             longlive.add_slot(dull_rc.clone(), &Dull::go_dull);
 
-            assert_eq!((*dull_rc).borrow().val, 3);
+            assert_eq!(dull_rc.val, 3);
 
             assert_eq!(longlive.slots.len(), 1);
         }
@@ -199,20 +184,20 @@ mod tests {
     }
 
     impl TwoSlots {
-        fn new() -> Arc<RefCell<Self>> {
+        fn new() -> Rc<MutCell<Self>> {
             let s = Self {
                 price: Si::new(10),
                 quantity: Si::new(5),
                 total_cached: -1,
             };
 
-            let rc = Arc::new(RefCell::new(s));
+            let rc = Rc::new(MutCell::new(s));
 
-            rc.borrow_mut()
+            rc.get_mut()
                 .price
                 .add_slot(rc.clone(), &TwoSlots::recache_total);
 
-            rc.borrow_mut()
+            rc.get_mut()
                 .quantity
                 .add_slot(rc.clone(), &TwoSlots::recache_total);
 
@@ -227,12 +212,12 @@ mod tests {
     #[test]
     fn two_slots() {
         let x = TwoSlots::new();
-        assert!((*x).borrow().total_cached == 50);
+        assert!(x.total_cached == 50);
 
-        x.borrow_mut().quantity.set(7);
-        assert!((*x).borrow().total_cached == 70);
+        x.get_mut().quantity.set(7);
+        assert!(x.total_cached == 70);
 
-        x.borrow_mut().price.set(6);
-        assert!((*x).borrow().total_cached == 42);
+        x.get_mut().price.set(6);
+        assert!(x.total_cached == 42);
     }
 }

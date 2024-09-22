@@ -4,13 +4,13 @@ package scheme;
 
 message Empty {}
 
-service MoreOnigiriServices {
-  rpc SendPing(Empty) returns (Pong);
-  rpc GetData(DataRequest) returns (stream DataResponse);
+service MoTalking {
+  rpc RequestServerClock(Empty) returns (stream Tick);
+  rpc GetData(MoClientDatagram) returns (MoServerDatagram);
 }
 
-message Pong { string port = 1; }
+message Tick { string port = 1; }
 
-message DataRequest { uint32 version = 1; }
+message MoClientDatagram { uint32 version = 1; }
 
-message DataResponse { uint32 counter = 1; }
+message MoServerDatagram { uint32 counter = 1; }

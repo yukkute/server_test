@@ -8,20 +8,23 @@ crate-type = ["cdylib", "staticlib"]
 name = "server"
 
 [dependencies]
-flutter_rust_bridge = "=2.0.0-dev.28"
+flutter_rust_bridge = "=2.4.0"
 futures-util = "0.3.30"
 paste = "1.0.15"
-prost = { version = "0.12.3", default-features = false, features = [
+prost = { version = "0.13.3", default-features = false, features = [
     "prost-derive",
 ] }
-prost-types = { version = "0.12.3", default-features = false }
+prost-types = { version = "0.13.3", default-features = false }
 rand = "0.8.5"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-tokio-stream = "0.1.15"
-tonic = "0.11.0"
-tonic-reflection = "0.11.0"
+tokio-stream = "0.1.16"
+tonic = "0.12.2"
+tonic-reflection = "0.12.2"
 
 
 [build-dependencies]
-prost-build = "0.12.3"
-tonic-build = "0.11.0"
+prost-build = "0.13.3"
+tonic-build = "0.12.2"
+
+[profile.release]
+opt-level = 3

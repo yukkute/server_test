@@ -4,7 +4,7 @@ pub(crate) mod scheme {
 
 use futures_util::StreamExt;
 use rand::Rng;
-use scheme::{DataRequest, DataResponse, Pong};
+use scheme::{MoClientDatagram, MoServerDatagram, Tick};
 use std::{
     pin::Pin,
     sync::{Mutex, Once},
@@ -12,13 +12,13 @@ use std::{
 use tokio::time::Duration;
 use tonic::{Request, Response, Status};
 
-use self::scheme::more_onigiri_services_server::{MoreOnigiriServices, MoreOnigiriServicesServer};
+use self::scheme::mo_talking_server::{MoTalking, MoTalkingServer};
 
 use super::available_port::get_available_port;
 
 static SERVICES_INITIALIZATION: Once = Once::new();
 static PORT: Mutex<Option<u16>> = Mutex::new(None);
-static MORE_ONIGIRI_SERVICES: Mutex<Option<MoreOnigiriServicesServer<GrpcServer>>> =
+static MORE_ONIGIRI_SERVICES: Mutex<Option<MoTalkingServer<GrpcServer>>> =
     Mutex::new(None);
 
 fn init() {
@@ -31,7 +31,7 @@ fn init() {
         PORT.lock().unwrap().replace(port);
 
         // Initialize MOServices
-        let more_onigiri_services = MoreOnigiriServicesServer::new(GrpcServer { port });
+        let more_onigiri_services = MoTalkingServer::new(GrpcServer { port });
         MORE_ONIGIRI_SERVICES
             .lock()
             .unwrap()
@@ -39,7 +39,7 @@ fn init() {
     });
 }
 
-pub fn get_more_onigiri_services() -> MoreOnigiriServicesServer<GrpcServer> {
+pub fn get_more_onigiri_services() -> MoTalkingServer<GrpcServer> {
     init();
     let Some(ref s) = *MORE_ONIGIRI_SERVICES.lock().unwrap() else {
         // Safety: init called
@@ -62,34 +62,45 @@ pub struct GrpcServer {
 }
 
 #[tonic::async_trait]
-impl MoreOnigiriServices for GrpcServer {
-    type GetDataStream = Pin<
-        Box<dyn tokio_stream::Stream<Item = Result<DataResponse, Status>> + Send + Sync + 'static>,
-    >;
+impl MoTalking for GrpcServer {
+    type RequestServerClockStream = Pin<Box<dyn futures_util::Stream<Item = Result<Tick, Status>> + Send>>;
 
-    async fn send_ping(
+    async fn request_server_clock(
         &self,
-        _request: tonic::Request<scheme::Empty>,
-    ) -> Result<Response<Pong>, Status> {
-        let reply = Pong {
-            port: self.port.to_string(),
-        };
+        _request: Request<scheme::Empty>,
+    ) -> Result<Response<Self::RequestServerClockStream>, Status> {
 
-        Ok(tonic::Response::new(reply))
+        let port = self.port;
+        let stream = tokio_stream::iter(0..).then(move |_| {
+            let port = port.to_string();
+            async move {
+
+                tokio::time::sleep(Duration::from_millis(50)).await;
+                
+                let tick = Tick { port: port.clone() };
+                Ok(tick)
+            }
+        });
+        Ok(Response::new(Box::pin(stream)))
     }
 
     async fn get_data(
         &self,
-        _request: Request<DataRequest>,
-    ) -> Result<Response<Self::GetDataStream>, Status> {
-        let stream = tokio_stream::wrappers::IntervalStream::new(tokio::time::interval(
-            Duration::from_millis(1000 / 3),
-        ))
-        .map(|_| {
-            let counter = rand::thread_rng().gen_range(1000..=9999);
-            Ok(DataResponse { counter })
-        });
+        request: Request<MoClientDatagram>,
+    ) -> Result<Response<MoServerDatagram>, Status> {
+        
+        let version = request.into_inner().version;
 
-        Ok(Response::new(Box::pin(stream)))
+        // Generate a random counter value for the response
+        let counter = rand::thread_rng().gen_range(0..100);
+
+        // Create a MoServerDatagram response
+        let response = MoServerDatagram { counter };
+
+        // You can add logic based on the version if needed
+        println!("Received version: {}, responding with counter: {}", version, counter);
+
+        // Send the response back to the client
+        Ok(Response::new(response))
     }
 }
