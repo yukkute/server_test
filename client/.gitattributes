@@ -1,5 +1,0 @@
-*.h   -linguist-detectable
-*.cc  -linguist-detectable
-
-*.cmake -linguist-detectable
-CMakeLists.txt -linguist-detectable

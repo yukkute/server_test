@@ -1,94 +1,18 @@
-import 'dart:async';
-
-import 'package:client/connection.dart';
-import 'package:client/generated/rust/mo_server/local_server.dart';
 import 'package:flutter/material.dart';
 
-import 'generated/rust/frb_generated.dart';
+import 'package:mo_client/rust_ffi.dart';
 
-void main() async {
-  // Initialize rust lib
-  await RustLib.init();
+void main() {
+  final rust = RustBindings();
 
-  try {
-    // Start local server
-    localPort = await startLocalServer();
-  } catch (e) {
-    print(e);
-  }
-
-  localPort!;
-  stayConnected();
+  int port = rust.startLocalServer();
+  print(port);
 
   runApp(const MyApp());
 }
 
-class CounterWidget extends StatefulWidget {
-  const CounterWidget({super.key});
-
-  @override
-  CounterWidgetState createState() => CounterWidgetState();
-}
-
-class CounterWidgetState extends State<CounterWidget> {
-  Stream<DataResponse>? _dataStream;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    stayConnected();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void stayConnected() {
-    _timer = Timer.periodic(const Duration(milliseconds: 10), (Timer t) async {
-      if (!connected) {
-        _dataStream = null;
-        return;
-      }
-      if (_dataStream == null) {
-        final request = DataRequest()..version = 0;
-        try {
-          _dataStream = stub?.getData(request);
-          setState(() {});
-        } catch (e) {
-          _dataStream = null;
-        }
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<DataResponse>(
-      stream: _dataStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError || snapshot.data == null) {
-          _dataStream = null;
-          return const CircularProgressIndicator();
-        } else {
-          return Text(
-            'Data: ${snapshot.data?.counter}',
-            style: const TextStyle(
-              fontFamily: "monospace",
-            ),
-          );
-        }
-      },
-    );
-  }
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -104,7 +28,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
   final String title;
 
   @override
@@ -112,6 +35,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
+
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,13 +50,24 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            CounterWidget(),
+            const Text(
+              'You have pushed the button this many times:',
+            ),
+            Text(
+              '$_counter',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
       ),
     );
   }

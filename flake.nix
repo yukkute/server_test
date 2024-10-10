@@ -17,16 +17,22 @@
       {
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
-            #dart
-            rustup
-            protobuf
+            cargo
+            flutter
+            rustc                        
+            #-----linux-----
+            cmake
+            graphite2
+            gtk3
           ];
           
           shellHook = ''
-            #export PATH=$PATH:${pkgs.dart}/bin
-            export PATH=$PATH:${pkgs.rustup}/bin
-            export PATH=$PATH:${pkgs.protobuf}/bin
-            echo "Development environment ready!"
+            export CC=clang
+            export CXX=clang++
+            export PATH="$PATH:${pkgs.flutter}/bin"
+            export FLUTTER_SDK="$FLUTTER_HOME"
+
+            flutter config --no-analytics > /dev/null
           '';
         };
       });
