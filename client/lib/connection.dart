@@ -7,7 +7,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'generated/protobuf/data.pbgrpc.dart';
 
 bool connected = false;
-MoreOnigiriServicesClient? stub;
+MoTalkingClient? stub;
 ClientChannel? _channel;
 
 final info = NetworkInfo();
@@ -30,21 +30,14 @@ Future<Set<Server>> listenActiveServers() async {
     Datagram? datagram = socket.receive();
     if (datagram == null) return;
 
-    //print("datagram catched: $datagram\n");
-
     String message = String.fromCharCodes(datagram.data).trim();
-
-    //print("message: $message");
 
     const header = 'mo_';
 
     if (!message.startsWith(header)) return;
 
     int? portNumber = int.tryParse(message.substring(header.length));
-    if (portNumber == null) return;
-    if (portNumber < 0 || portNumber > 65535) return;
-
-    //print("address: ${datagram.address}, port: $portNumber");
+    if (portNumber == null || portNumber < 0 || portNumber > 65535) return;
 
     activeServers.add((datagram.address, portNumber));
   });
@@ -99,7 +92,7 @@ Future<void> tryToConnect() async {
       options: const ChannelOptions(credentials: ChannelCredentials.insecure()),
     );
 
-    stub = MoreOnigiriServicesClient(_channel!, options: CallOptions());
+    stub = MoTalkingClient(_channel!, options: CallOptions());
   } catch (e) {
     await disconnect();
   }
