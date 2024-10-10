@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr, SocketAddr};
 
-use super::services::{get_more_onigiri_services, get_port};
+use super::services::{get_talking_service, get_port};
 
 pub async fn start_local_server() -> Option<u16> {
     let port = get_port();
@@ -24,15 +24,14 @@ pub async fn start_local_server() -> Option<u16> {
         return None;
     };
 
-    let more_onigiri_services = get_more_onigiri_services();
-    //= crate::mo_server::services::scheme::more_onigiri_services_server::MoreOnigiriServicesServer::new(crate::mo_server::services::GrpcServer { port });
+    let talking_service = get_talking_service();
 
-    let s = tonic::transport::Server::builder()
-        .add_service(more_onigiri_services)
+    let well_built_server = tonic::transport::Server::builder()
+        .add_service(talking_service)
         .add_service(reflection_service);
 
     tokio::spawn(async move {
-        match s.serve(addr).await {
+        match well_built_server.serve(addr).await {
             Ok(_) => {}
             Err(e) => {
                 dbg!(e);

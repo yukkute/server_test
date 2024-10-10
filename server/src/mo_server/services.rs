@@ -18,7 +18,7 @@ use super::available_port::get_available_port;
 
 static SERVICES_INITIALIZATION: Once = Once::new();
 static PORT: Mutex<Option<u16>> = Mutex::new(None);
-static MORE_ONIGIRI_SERVICES: Mutex<Option<MoTalkingServer<GrpcServer>>> =
+static MO_TALKING_SERVER: Mutex<Option<MoTalkingServer<GrpcServer>>> =
     Mutex::new(None);
 
 fn init() {
@@ -30,18 +30,17 @@ fn init() {
         };
         PORT.lock().unwrap().replace(port);
 
-        // Initialize MOServices
-        let more_onigiri_services = MoTalkingServer::new(GrpcServer { port });
-        MORE_ONIGIRI_SERVICES
+        let talking_service = MoTalkingServer::new(GrpcServer { port });
+        MO_TALKING_SERVER
             .lock()
             .unwrap()
-            .replace(more_onigiri_services);
+            .replace(talking_service);
     });
 }
 
-pub fn get_more_onigiri_services() -> MoTalkingServer<GrpcServer> {
+pub fn get_talking_service() -> MoTalkingServer<GrpcServer> {
     init();
-    let Some(ref s) = *MORE_ONIGIRI_SERVICES.lock().unwrap() else {
+    let Some(ref s) = *MO_TALKING_SERVER.lock().unwrap() else {
         // Safety: init called
         unreachable!();
     };
