@@ -4,12 +4,10 @@ set -e
 cd "$(dirname "$(realpath "$0")")"
 
 cd ../client
-export CMAKE_INSTALL_PREFIX=$HOME/.local
 flutter build linux --release
 
 cd ../server
 cargo build --release --target x86_64-unknown-linux-gnu
-
 
 echo
 DEST_DIR=../client/build/linux/x64/release/bundle/lib
