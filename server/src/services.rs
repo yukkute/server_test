@@ -1,5 +1,5 @@
 pub mod scheme {
-    tonic::include_proto!("scheme");
+    tonic::include_proto!("data");
 }
 
 use futures_util::StreamExt;

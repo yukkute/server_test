@@ -1,10 +1,22 @@
-use std::path::PathBuf;
+use std::error::Error;
+use std::fs;
+use std::path::{Path, PathBuf};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let original_out_dir = PathBuf::from("./src/generated");
+fn main() -> Result<(), Box<dyn Error>> {
+    let proto_files: Vec<PathBuf> = fs::read_dir(Path::new("../proto"))?
+        .filter(|e| e.is_ok())
+        .filter_map(|entry| {
+            let path = entry.unwrap().path();
+            if path.extension()? == "proto" {
+                return Some(path);
+            }
+            None
+        })
+        .collect();
+
     tonic_build::configure()
-        .file_descriptor_set_path(original_out_dir.join("descriptor.bin"))
-        .compile_protos(&["../data.proto"], &["../"])?;
+        .file_descriptor_set_path(PathBuf::from("./src/generated/descriptor.bin"))
+        .compile_protos(&proto_files, &["../"])?;
 
     Ok(())
 }
