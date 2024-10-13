@@ -8,7 +8,7 @@ read -p "Do you want a clean-build? (Y/n): " clean_build
 clean_build=${clean_build:-Y}
 
 if [ "$clean_build" = "y" ] || [ "$clean_build" = "Y" ]; then
-    echo "Cleaning build directories..."
+    echo -e -n "\n\033[37m🧹 Cleaning build directories... "
 
     # Clean Flutter build directory
     cd ../client
@@ -16,12 +16,12 @@ if [ "$clean_build" = "y" ] || [ "$clean_build" = "Y" ]; then
 
     cd ../server
     cargo clean -q
-
-    echo "Clean complete."
+    echo -e "cleaned\033[0m"
 fi
 
 # Build Flutter client
 cd ../client
+echo -e "\n🐦 \033[1;37mBuilding Flutter client...\033[0m"
 flutter build linux --release || {
     echo -e "\n😔 An error occurred while building the Flutter client."
     echo -e "👉 Try running the script with \033[1m\033[31mclean-build\033[0m option.\n"
@@ -30,6 +30,7 @@ flutter build linux --release || {
 
 # Build Rust server
 cd ../server
+echo -e "\n🦀 \033[1;37mBuilding Rust server...\033[0m\n"
 cargo build \
     --release \
     --target x86_64-unknown-linux-gnu \
