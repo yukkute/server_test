@@ -15,6 +15,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .collect();
 
     tonic_build::configure()
+        .build_client(false)
+        .build_server(true)
         .file_descriptor_set_path(PathBuf::from("./src/generated/descriptor.bin"))
         .compile_protos(&proto_files, &["../"])?;
 
