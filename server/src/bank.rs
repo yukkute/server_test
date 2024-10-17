@@ -57,7 +57,7 @@ impl Bank {
 
 impl HasEvents for Bank {
     type Events = dyn BankEvents;
-    
+
     fn listeners(&self) -> &RefCell<Vec<Weak<Self::Events>>> {
         &self.listeners
     }

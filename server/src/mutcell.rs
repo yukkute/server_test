@@ -3,7 +3,10 @@ use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 
 #[derive(Debug, Default)]
-pub struct MutCell<T> where T: Sized {
+pub struct MutCell<T>
+where
+    T: Sized,
+{
     value: UnsafeCell<T>,
 }
 
@@ -48,7 +51,9 @@ impl<T> DerefMut for MutCell<T> {
 }
 
 pub trait MakeShared {
-    fn make_shared() -> Rc<MutCell<Self>> where Self:Sized;
+    fn make_shared() -> Rc<MutCell<Self>>
+    where
+        Self: Sized;
 }
 
 #[cfg(test)]
@@ -57,7 +62,7 @@ mod tests {
 
     #[test]
     fn test_shr_mutability() {
-        let mut_cell:MutCell<String> = "Hello".to_owned().into();
+        let mut_cell: MutCell<String> = "Hello".to_owned().into();
 
         let shared_reference = mut_cell.get();
         assert_eq!(shared_reference, "Hello");

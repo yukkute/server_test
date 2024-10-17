@@ -19,8 +19,6 @@
 
 //         let rc = Arc::new(RefCell::new(c));
 
-        
-
 //         rc
 //     }
 
