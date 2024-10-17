@@ -1,70 +1,108 @@
-use std::rc::Rc;
+use std::cell::{Cell, RefCell};
+use std::rc::Weak;
 
-use super::{
-    ingame_types::Money,
-    mutcell::{MakeShared, MutCell},
-    observer::Si,
-};
+use crate::{events::HasEvents, pb::PbBank};
 
+pub trait BankEvents {
+    fn on_funds_changed(&self, funds: f64);
+}
+
+#[derive(Debug, Default)]
 pub struct Bank {
-    funds_earned: Si<Money>,
-    funds_cheated: Si<Money>,
-    funds_spent: Si<Money>,
-    funds: Si<Money>,
+    pb_bank: Cell<PbBank>,
+    listeners: RefCell<Vec<Weak<dyn BankEvents>>>,
 }
 
 impl Bank {
-    pub fn funds(&self) -> Money {
-        *self.funds_earned + *self.funds_cheated - *self.funds_spent
+    pub fn imbue(&self, new_pb_bank: PbBank) {
+        self.pb_bank.set(new_pb_bank);
+        self.on_funds_changed();
     }
 
-    fn encache_funds(&mut self) {
-        let n = *self.funds_earned + *self.funds_cheated - *self.funds_spent;
-        self.funds.set(n);
+    pub fn serialize(&self) -> PbBank {
+        self.pb_bank.get()
     }
 
-    fn earn(&mut self, amount: Money) {
-        self.funds_earned.set(*self.funds_earned + amount);
+    pub fn earn(&self, amount: f64) {
+        let mut pb = self.pb_bank.get();
+        pb.earned += amount;
+        self.pb_bank.set(pb);
+        self.on_funds_changed();
+    }
+
+    pub fn spend(&self, amount: f64) {
+        let mut pb = self.pb_bank.get();
+        pb.spent += amount;
+        self.pb_bank.set(pb);
+        self.on_funds_changed();
+    }
+
+    pub fn funds(&self) -> f64 {
+        let pb = self.pb_bank.get();
+        pb.earned - pb.spent
+    }
+
+    fn on_funds_changed(&self) {
+        let funds = self.funds();
+        self.listeners.borrow_mut().retain(|listener| {
+            if let Some(listener) = listener.upgrade() {
+                listener.on_funds_changed(funds);
+                true
+            } else {
+                false
+            }
+        });
     }
 }
 
-impl MakeShared for Bank {
-    fn make_shared() -> Rc<MutCell<Self>> {
-
-        let bank = Rc::new(MutCell::from(Bank {
-            funds_earned: Default::default(),
-            funds_cheated: Default::default(),
-            funds_spent: Default::default(),
-            funds: Default::default(),
-        }));
-
-        let b = bank.get_mut();
-
-        let s = &Self::encache_funds;
-
-        b.funds_earned.add_agnostic_slot(bank.clone(), s);
-        b.funds_cheated.add_agnostic_slot(bank.clone(), s);
-        b.funds_spent.add_agnostic_slot(bank.clone(), s);
-
-        bank
+impl HasEvents for Bank {
+    type Events = dyn BankEvents;
+    
+    fn listeners(&self) -> &RefCell<Vec<Weak<Self::Events>>> {
+        &self.listeners
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::mutcell::MakeShared;
+    use super::*;
+    use std::rc::Rc;
 
-    use super::Bank;
+    #[derive(Debug)]
+    struct StockmarketDisplay {
+        exchange_rate: f64,
+        last_display: Cell<f64>,
+    }
+
+    impl StockmarketDisplay {
+        fn new(exchange_rate: f64) -> Rc<Self> {
+            Rc::new(Self {
+                exchange_rate,
+                last_display: Cell::new(0.0),
+            })
+        }
+    }
+
+    impl BankEvents for StockmarketDisplay {
+        fn on_funds_changed(&self, funds: f64) {
+            self.last_display.set(funds * self.exchange_rate);
+        }
+    }
 
     #[test]
-    fn bank_creation() {
-        let b = Bank::make_shared();
-        assert!(*b.funds == 0.0);
+    fn bank_events() {
+        let bank = Bank::default();
 
-        b.get_mut().funds_earned.set(1.0);
-        assert!(*b.funds == 1.0);
+        let display1 = StockmarketDisplay::new(10.0);
+        let display2 = StockmarketDisplay::new(0.5);
 
-        b.get_mut().funds_spent.set(1.0);
-        assert!(*b.funds == 0.0);
+        bank.connect_events(Rc::downgrade(&(display1.clone() as Rc<dyn BankEvents>)));
+        bank.connect_events(Rc::downgrade(&(display2.clone() as Rc<dyn BankEvents>)));
+
+        bank.earn(100.0);
+        bank.spend(30.0);
+
+        assert_eq!(display1.last_display.get(), 700.0);
+        assert_eq!(display2.last_display.get(), 35.0);
     }
 }

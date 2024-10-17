@@ -1,0 +1,7 @@
+syntax = "proto3";
+package gamestate;
+
+message PbBank {
+  double earned = 1;
+  double spent = 2;
+}

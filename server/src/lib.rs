@@ -5,10 +5,11 @@ mod generated; // subdirectory generated
 mod available_port;
 mod bank;
 mod clicker;
-mod ingame_types;
+mod events;
 mod local_server;
 mod multicast;
 mod mutcell;
 mod observer;
+mod pb;
 mod services;
 mod user_data;

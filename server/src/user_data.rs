@@ -44,7 +44,7 @@ impl UserData {
                     value: {
                         let mut token: [u8; Self::TOKEN_LENGTH] = [0; Self::TOKEN_LENGTH];
                         rand::thread_rng().fill(&mut token);
-                        BASE64_URL_SAFE.encode(&token)
+                        BASE64_URL_SAFE.encode(token)
                     },
                 };
                 user.token = Some(user_token.clone());
@@ -110,7 +110,7 @@ impl StoredPassword {
 
         let salt: String = {
             let salt_bytes: [u8; Self::SALT_LEN] = rand::thread_rng().gen();
-            BASE64_URL_SAFE.encode(&salt_bytes)
+            BASE64_URL_SAFE.encode(salt_bytes)
         };
 
         let password_hash = {

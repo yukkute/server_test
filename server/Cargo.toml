@@ -11,10 +11,8 @@ name = "moreonigiri_server"
 anyhow = "1.0.89"
 atty = "0.2.14"
 base64 = "0.22.1"
-flutter_rust_bridge = "=2.4.0"
 futures-util = "0.3.31"
 log = "0.4.22"
-paste = "1.0.15"
 prost = { version = "0.13.3", default-features = false, features = [
     "prost-derive",
 ] }
