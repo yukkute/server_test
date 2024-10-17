@@ -6,7 +6,6 @@ use std::collections::HashMap;
 
 type Username = String;
 
-#[flutter_rust_bridge::frb(opaque)]
 #[derive(Default)]
 pub struct UserData {
     users: HashMap<Username, UserEntry>,
@@ -72,7 +71,6 @@ pub struct UserToken {
     value: String,
 }
 
-#[flutter_rust_bridge::frb(opaque)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct UserEntry {
     password: StoredPassword,
