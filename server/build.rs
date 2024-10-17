@@ -1,6 +1,8 @@
-use std::error::Error;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let proto_files: Vec<PathBuf> = fs::read_dir(Path::new("../proto"))?

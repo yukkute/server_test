@@ -1,6 +1,8 @@
-use std::cell::UnsafeCell;
-use std::ops::{Deref, DerefMut};
-use std::rc::Rc;
+use std::{
+    cell::UnsafeCell,
+    ops::{Deref, DerefMut},
+    rc::Rc,
+};
 
 #[derive(Debug, Default)]
 pub struct MutCell<T>

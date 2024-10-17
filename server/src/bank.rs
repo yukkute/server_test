@@ -1,5 +1,7 @@
-use std::cell::{Cell, RefCell};
-use std::rc::Weak;
+use std::{
+    cell::{Cell, RefCell},
+    rc::Weak,
+};
 
 use crate::{events::HasEvents, pb::PbBank};
 

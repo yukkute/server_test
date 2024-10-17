@@ -4,8 +4,10 @@ use crate::{
 };
 use log::{error, info};
 use simplelog::*;
-use std::net::{Ipv4Addr, SocketAddr};
-use std::sync::OnceLock;
+use std::{
+    net::{Ipv4Addr, SocketAddr},
+    sync::OnceLock,
+};
 use tokio::runtime::Runtime;
 
 static TOKIO_RUNTIME: OnceLock<Runtime> = OnceLock::new();

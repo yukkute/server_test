@@ -1,9 +1,13 @@
 #![allow(dead_code)]
 
-use std::net::SocketAddrV4;
-use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::net::UdpSocket;
-use tokio::time::{interval, Duration};
+use std::{
+    net::SocketAddrV4,
+    sync::atomic::{AtomicBool, Ordering},
+};
+use tokio::{
+    net::UdpSocket,
+    time::{interval, Duration},
+};
 
 static MULTICASTING_RUNNING: AtomicBool = AtomicBool::new(false);
 
@@ -42,8 +46,10 @@ pub fn stop_multicasting() {
 mod tests {
     use super::*;
     use std::net::SocketAddrV4;
-    use tokio::net::UdpSocket;
-    use tokio::time::{timeout, Duration};
+    use tokio::{
+        net::UdpSocket,
+        time::{timeout, Duration},
+    };
 
     #[tokio::test]
     async fn get_port_from_multicast() {
