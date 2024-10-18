@@ -160,8 +160,8 @@ mod tests {
 		assert!(entry.is_err());
 
 		let second_entry = StoredPassword::new(
-			"Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-            Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+			"Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+			Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 		);
 		assert!(second_entry.is_err())
 	}
