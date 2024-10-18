@@ -1,8 +1,9 @@
+use std::collections::HashMap;
+
 use anyhow::anyhow;
 use base64::{prelude::BASE64_URL_SAFE, Engine};
 use rand::Rng;
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
 
 type Username = String;
 

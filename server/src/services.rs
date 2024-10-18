@@ -1,9 +1,11 @@
-use crate::pb::{mo_talking_server::MoTalking, Empty, MoClientDatagram, MoServerDatagram, Tick};
+use std::pin::Pin;
+
 use futures_util::StreamExt;
 use rand::Rng;
-use std::pin::Pin;
 use tokio::time::Duration;
 use tonic::{Request, Response, Status};
+
+use crate::pb::{mo_talking_server::MoTalking, Empty, MoClientDatagram, MoServerDatagram, Tick};
 
 pub struct GrpcServer {
 	pub port: u16,

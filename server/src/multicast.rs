@@ -4,6 +4,7 @@ use std::{
 	net::SocketAddrV4,
 	sync::atomic::{AtomicBool, Ordering},
 };
+
 use tokio::{
 	net::UdpSocket,
 	time::{interval, Duration},
@@ -44,12 +45,14 @@ pub fn stop_multicasting() {
 }
 #[cfg(test)]
 mod tests {
-	use super::*;
 	use std::net::SocketAddrV4;
+
 	use tokio::{
 		net::UdpSocket,
 		time::{timeout, Duration},
 	};
+
+	use super::*;
 
 	#[tokio::test]
 	async fn get_port_from_multicast() {

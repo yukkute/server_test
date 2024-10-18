@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
-use tokio::runtime::Runtime;
 
 use simplelog::*;
+use tokio::runtime::Runtime;
 
 pub fn init_runtime() {
 	let log_config = ConfigBuilder::default()

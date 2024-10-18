@@ -67,8 +67,9 @@ impl HasEvents for Bank {
 
 #[cfg(test)]
 mod tests {
-	use super::*;
 	use std::rc::Rc;
+
+	use super::*;
 
 	#[derive(Debug)]
 	struct StockmarketDisplay {
