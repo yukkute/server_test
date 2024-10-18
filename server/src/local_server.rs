@@ -1,44 +1,15 @@
 use crate::{
-	available_port::get_available_port, pb::mo_talking_server::MoTalkingServer,
+	available_port::get_available_port,
+	pb::mo_talking_server::MoTalkingServer,
+	runtime::{init_runtime, TOKIO_RUNTIME},
 	services::GrpcServer,
 };
 use log::{error, info};
-use simplelog::*;
-use std::{
-	net::{Ipv4Addr, SocketAddr},
-	sync::OnceLock,
-};
-use tokio::runtime::Runtime;
-
-static TOKIO_RUNTIME: OnceLock<Runtime> = OnceLock::new();
+use std::net::{Ipv4Addr, SocketAddr};
 
 #[no_mangle]
 pub extern "C" fn start_local_server() -> u16 {
-	let runtime = TOKIO_RUNTIME.get_or_init(|| {
-		let log_config = ConfigBuilder::default()
-			.set_time_format_custom(format_description!(
-				"[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]"
-			))
-			.build();
-
-		let log_filter = LevelFilter::Info;
-
-		let color_choice = if atty::is(atty::Stream::Stdout) {
-			ColorChoice::Auto
-		} else {
-			ColorChoice::Never
-		};
-
-		CombinedLogger::init(vec![TermLogger::new(
-			log_filter,
-			log_config,
-			TerminalMode::Mixed,
-			color_choice,
-		)])
-		.unwrap();
-
-		Runtime::new().unwrap()
-	});
+	init_runtime();
 
 	let Some(port) = get_available_port() else {
 		error!("could not bind a port");
@@ -63,7 +34,7 @@ pub extern "C" fn start_local_server() -> u16 {
 		.add_service(reflection_service);
 
 	// Use the runtime to spawn the server
-	runtime.spawn(async move { well_built_server.serve(addr).await });
+	TOKIO_RUNTIME.spawn(async move { well_built_server.serve(addr).await });
 
 	info!("Personal server listening on {}:{}", loopback, port);
 

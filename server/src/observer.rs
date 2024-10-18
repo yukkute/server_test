@@ -82,6 +82,7 @@ where
 	Data: PartialEq,
 {
 	object: Weak<MutCell<T>>,
+	#[allow(clippy::type_complexity)]
 	method: Box<dyn FnMut(&mut T, &Data)>,
 }
 
@@ -103,7 +104,7 @@ where
 			return;
 		};
 
-		(self.method)(object.get_mut(), &data);
+		(self.method)(object.get_mut(), data);
 	}
 }
 
@@ -125,27 +126,23 @@ mod tests {
 
 			let rc = Rc::new(MutCell::new(f));
 
-			rc.get_mut().bingo.add_slot(rc.clone(), &Fancy::check_bingo);
+			rc.get_mut().bingo.add_slot(rc.clone(), Fancy::check_bingo);
 
 			rc
 		}
 
 		fn check_bingo(&mut self, _: &i32) {
-			if *self.bingo == 42 {
-				self.lucky = true
-			} else {
-				self.lucky = false
-			}
+			self.lucky = *self.bingo == 42;
 		}
 	}
 
 	#[test]
 	fn self_listening() {
 		let x = Fancy::new();
-		assert!(x.lucky == false);
+		assert!(!x.lucky);
 
 		x.get_mut().bingo.set(42);
-		assert!(x.lucky == true);
+		assert!(x.lucky);
 	}
 
 	struct Dull {
@@ -166,7 +163,7 @@ mod tests {
 			let dull = Dull { val: -1 };
 			let dull_rc = Rc::new(MutCell::new(dull));
 
-			longlive.add_slot(dull_rc.clone(), &Dull::go_dull);
+			longlive.add_slot(dull_rc.clone(), Dull::go_dull);
 
 			assert_eq!(dull_rc.val, 3);
 
@@ -195,11 +192,11 @@ mod tests {
 
 			rc.get_mut()
 				.price
-				.add_slot(rc.clone(), &TwoSlots::recache_total);
+				.add_slot(rc.clone(), TwoSlots::recache_total);
 
 			rc.get_mut()
 				.quantity
-				.add_slot(rc.clone(), &TwoSlots::recache_total);
+				.add_slot(rc.clone(), TwoSlots::recache_total);
 
 			rc
 		}

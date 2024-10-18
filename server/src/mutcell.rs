@@ -21,6 +21,7 @@ impl<T> MutCell<T> {
 		}
 	}
 
+	#[allow(clippy::mut_from_ref)]
 	pub fn get_mut(&self) -> &mut T {
 		unsafe { &mut *self.value.get() }
 	}
