@@ -105,7 +105,7 @@ mod tests {
 		bank.earn(100.0);
 		bank.spend(30.0);
 
-		assert_eq!(display1.last_display.get(), 700.0);
-		assert_eq!(display2.last_display.get(), 35.0);
+		assert!((display1.last_display.get() - 700.0).abs() < 0.001);
+		assert!((display1.last_display.get() - 35.0).abs() < 0.001);
 	}
 }

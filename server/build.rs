@@ -6,9 +6,9 @@ use std::{
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let proto_files: Vec<PathBuf> = fs::read_dir(Path::new("../proto"))?
-		.filter(|e| e.is_ok())
+		.flatten()
 		.filter_map(|entry| {
-			let path = entry.unwrap().path();
+			let path = entry.path();
 			if path.extension()? == "proto" {
 				return Some(path);
 			}

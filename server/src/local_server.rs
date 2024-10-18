@@ -19,7 +19,7 @@ pub extern "C" fn start_local_server() -> u16 {
 	};
 
 	let loopback = Ipv4Addr::LOCALHOST;
-	let addr: SocketAddr = format!("{}:{}", loopback, port).parse().unwrap();
+	let addr: SocketAddr = format!("{loopback}:{port}").parse().unwrap();
 
 	debug_assert!(addr.is_ipv4());
 

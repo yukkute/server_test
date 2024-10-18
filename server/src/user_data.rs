@@ -114,7 +114,7 @@ impl StoredPassword {
 
 		let password_hash = {
 			let mut hasher = Sha256::new();
-			hasher.update(format!("{}{}", password, salt));
+			hasher.update(format!("{password}{salt}"));
 			let result = hasher.finalize();
 			BASE64_URL_SAFE.encode(result)
 		};
@@ -163,7 +163,7 @@ mod tests {
 			"Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 			Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 		);
-		assert!(second_entry.is_err())
+		assert!(second_entry.is_err());
 	}
 
 	#[test]

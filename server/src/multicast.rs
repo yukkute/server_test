@@ -32,7 +32,7 @@ pub fn start_multicasting(grpc_port: u16) {
 				break;
 			}
 
-			let message = format!("mo_{}", grpc_port);
+			let message = format!("mo_{grpc_port}");
 			debug_assert!(message.is_ascii());
 
 			let _ = socket.send_to(message.as_bytes(), multicast_addr).await;
@@ -77,6 +77,6 @@ mod tests {
 		};
 
 		stop_multicasting();
-		assert_eq!(message, format!("mo_{}", target_port));
+		assert_eq!(message, format!("mo_{target_port}"));
 	}
 }

@@ -1,6 +1,9 @@
 use std::sync::LazyLock;
 
-use simplelog::*;
+use simplelog::{
+	format_description, ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, TermLogger,
+	TerminalMode,
+};
 use tokio::runtime::Runtime;
 
 pub fn init_runtime() {
