@@ -34,11 +34,7 @@ echo -e "\n🦀 \033[1;37mBuilding Rust server...\033[0m\n"
 cargo build \
     --release \
     --target x86_64-unknown-linux-gnu \
-    --color always \
-    2>&1 | while IFS= read -r line; do
-    # Output just the last line of cargo build
-    printf "\r\033[K%s" "$line"
-done || {
+|| {
     echo -e "\n😔 An error occurred while building the Rust server."
     echo -e "👉 Try running the script with \033[1m\033[31mclean-build\033[0m option.\n"
     exit 1

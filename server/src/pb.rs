@@ -1,2 +1,1 @@
-tonic::include_proto!("data");
-tonic::include_proto!("gamestate");
+tonic::include_proto!("proto");

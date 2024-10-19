@@ -1,4 +1,4 @@
 syntax = "proto3";
-package data;
+package proto;
 
-//message Empty {}
+message Empty {}
