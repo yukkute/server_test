@@ -2,6 +2,6 @@ syntax = "proto3";
 package proto;
 
 message PbBank {
-  double earned = 1;
-  double spent = 2;
+	double earned = 1;
+	double spent = 2;
 }

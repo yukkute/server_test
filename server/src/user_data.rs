@@ -1,9 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::SystemTime};
 
 use anyhow::anyhow;
 use base64::{prelude::BASE64_URL_SAFE, Engine};
+use log::{info, warn};
 use rand::Rng;
 use sha2::{Digest, Sha256};
+use time::Duration;
 
 type Username = String;
 
@@ -13,69 +15,92 @@ pub struct UserData {
 }
 
 impl UserData {
-	const TOKEN_LENGTH: usize = 64;
-
-	pub fn find_user(&self, name: &str) -> Option<&UserEntry> {
-		self.users.get(name)
-	}
+	const SESSION_ID_LENGTH: usize = 64;
+	const SESSION_DURATION: Duration = Duration::hours(72);
 
 	pub fn register(&mut self, name: &str, password: &str) -> anyhow::Result<()> {
 		let None = self.users.get(name) else {
 			return Err(anyhow!("username already taken"));
 		};
-
-		let user = {
-			let password_entry = StoredPassword::new(password)?;
-
+		self.users.insert(
+			name.to_owned(),
 			UserEntry {
-				password: password_entry,
-				token: None,
-			}
-		};
-		self.users.insert(name.to_owned(), user);
+				password: StoredPassword::store(password)?,
+				session_id: None,
+			},
+		);
+
+		info!("Registered new user: {name}");
 
 		Ok(())
 	}
 
-	pub fn authenticate(&mut self, name: &str, password: &str) -> anyhow::Result<UserToken> {
-		if let Some(user) = self.users.get_mut(name) {
-			if user.password.is(password) {
-				let user_token = UserToken {
-					value: {
-						let mut token: [u8; Self::TOKEN_LENGTH] = [0; Self::TOKEN_LENGTH];
-						rand::thread_rng().fill(&mut token);
-						BASE64_URL_SAFE.encode(token)
-					},
-				};
-				user.token = Some(user_token.clone());
+	pub fn authenticate(&mut self, name: &str, password: &str) -> anyhow::Result<Session> {
+		let error = || {
+			warn!("User failed to authenticate: {name}");
+			anyhow!("incorrect username or password")
+		};
 
-				return Ok(user_token);
-			}
+		let Some(user) = self.users.get_mut(name) else {
+			return Err(error());
+		};
+
+		if !user.password.is(password) {
+			return Err(error());
 		}
-		Err(anyhow!("incorrect username or password"))
+
+		let id = {
+			let mut id_bytes = [0_u8; Self::SESSION_ID_LENGTH];
+			rand::thread_rng().fill(&mut id_bytes);
+			BASE64_URL_SAFE.encode(id_bytes)
+		};
+
+		let session = Session {
+			value: id,
+			expires: SystemTime::now() + Self::SESSION_DURATION,
+		};
+
+		user.session_id = Some(session.clone());
+		info!("Session issued to user: {name}");
+
+		Ok(session)
 	}
 
-	pub fn known_by_token(&self, name: &str, token: &str) -> bool {
-		let Some(user) = self.find_user(name) else {
-			return false;
-		};
-		let Some(ref known_token) = user.token else {
+	pub fn has_valid_session(&mut self, name: &str, checked_session: &str) -> bool {
+		let Some(user) = self.users.get_mut(name) else {
 			return false;
 		};
 
-		token == known_token.value
+		let Some(ref known_session) = user.session_id else {
+			return false;
+		};
+
+		if known_session.expired() {
+			user.session_id = None;
+			warn!("Session expired for user: {name}");
+			return false;
+		}
+
+		checked_session == known_session.value
 	}
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UserToken {
-	value: String,
+pub struct Session {
+	pub value: String,
+	pub expires: SystemTime,
+}
+
+impl Session {
+	pub fn expired(&self) -> bool {
+		self.expires < SystemTime::now()
+	}
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct UserEntry {
 	password: StoredPassword,
-	token: Option<UserToken>,
+	session_id: Option<Session>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -90,7 +115,7 @@ impl StoredPassword {
 	const MIN_PASSWD_LEN: usize = 5;
 	const MAX_PASSWD_LEN: usize = 64;
 
-	fn new(password: &str) -> anyhow::Result<Self> {
+	fn store(password: &str) -> anyhow::Result<Self> {
 		match password.len() {
 			0..Self::MIN_PASSWD_LEN => {
 				return Err(anyhow!(
@@ -140,8 +165,8 @@ mod tests {
 
 	#[test]
 	fn store_passwords() {
-		let entry = StoredPassword::new("secure password").unwrap();
-		let second_entry = StoredPassword::new("secure password").unwrap();
+		let entry = StoredPassword::store("secure password").unwrap();
+		let second_entry = StoredPassword::store("secure password").unwrap();
 
 		assert_ne!(entry, second_entry);
 
@@ -150,16 +175,16 @@ mod tests {
 
 	#[test]
 	fn identify_same_password() {
-		let entry = StoredPassword::new("secure password").unwrap();
+		let entry = StoredPassword::store("secure password").unwrap();
 		assert!(entry.is("secure password"));
 	}
 
 	#[test]
 	fn invalid_len() {
-		let entry = StoredPassword::new("shrt");
+		let entry = StoredPassword::store("shrt");
 		assert!(entry.is_err());
 
-		let second_entry = StoredPassword::new(
+		let second_entry = StoredPassword::store(
 			"Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 			Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 		);
@@ -172,7 +197,7 @@ mod tests {
 
 		let _ = userdata.register("alice", "12345");
 
-		let user = userdata.find_user("alice");
+		let user = userdata.users.get("alice");
 		assert!(user.is_some());
 
 		let received_token = userdata.authenticate("alice", "12345");
@@ -180,7 +205,7 @@ mod tests {
 		assert!(received_token.is_ok());
 		let received_token = received_token.unwrap();
 
-		assert!(userdata.known_by_token("alice", &received_token.value));
+		assert!(userdata.has_valid_session("alice", &received_token.value));
 	}
 
 	#[test]

@@ -8,7 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 	let proto_files: Vec<PathBuf> = fs::read_dir(Path::new("../proto"))?
 		.flatten()
 		.map(|e| e.path())
-		.filter(|p| p.extension().unwrap() == "proto")
+		.filter(|p| p.extension().is_some_and(|e| e == "proto"))
 		.collect();
 
 	tonic_build::configure()

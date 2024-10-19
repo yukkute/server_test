@@ -11,6 +11,8 @@ if [ "$clean_build" = "y" ] || [ "$clean_build" = "Y" ]; then
     echo -e -n "\n\033[37m🧹 Cleaning build directories... "
 
     # Clean Flutter build directory
+    rm -rf ../client/lib/generated/protobuf
+
     cd ../client
     flutter clean >/dev/null
 
@@ -20,7 +22,11 @@ if [ "$clean_build" = "y" ] || [ "$clean_build" = "Y" ]; then
 fi
 
 # Build Flutter client
-cd ../client
+cd ..
+mkdir -p client/lib/generated/protobuf/
+protoc --proto_path=proto --dart_out=grpc:client/lib/generated/protobuf proto/*.proto
+
+cd client
 echo -e "\n🐦 \033[1;37mBuilding Flutter client...\033[0m"
 flutter build linux --release || {
     echo -e "\n😔 An error occurred while building the Flutter client."

@@ -6,6 +6,7 @@ mod generated; // subdirectory generated
 mod available_port;
 mod bank;
 mod clicker;
+mod data;
 mod events;
 mod local_server;
 mod multicast;

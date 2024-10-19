@@ -1,0 +1,6 @@
+BasedOnStyle: Microsoft
+AllowShortFunctionsOnASingleLine: Empty
+BreakBeforeBraces: Attach
+LineEnding: LF
+SpaceBeforeParens: NonEmptyParentheses
+UseTab: Always

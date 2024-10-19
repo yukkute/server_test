@@ -7,6 +7,8 @@ use simplelog::{
 use tokio::runtime::Runtime;
 
 pub fn init_runtime() {
+	TOKIO_RUNTIME.spawn(async {});
+
 	let log_config = ConfigBuilder::default()
 		.set_time_format_custom(format_description!(
 			"[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]"

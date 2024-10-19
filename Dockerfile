@@ -72,6 +72,7 @@ RUN git clone https://github.com/flutter/flutter.git
 RUN flutter config --disable-analytics >/dev/null && \
 	flutter config --enable-native-assets && \
 	flutter doctor && \
+	flutter pub global activate protoc_plugin && \
 	flutter precache --linux
 
 # More Onigiri

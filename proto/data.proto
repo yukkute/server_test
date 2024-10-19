@@ -2,14 +2,17 @@ syntax = "proto3";
 package proto;
 
 import "empty.proto";
+import "authentication.proto";
 
 service MoTalking {
-  rpc RequestServerClock(Empty) returns (stream Tick);
-  rpc GetData(MoClientDatagram) returns (MoServerDatagram);
+	rpc RequestServerClock (Empty) returns (stream Empty);
+	rpc GetData (MoClientDatagram) returns (MoServerDatagram);
 }
 
-message Tick { string port = 1; }
+message MoClientDatagram {
+	SessionId session_id = 1;
+}
 
-message MoClientDatagram { uint32 version = 1; }
-
-message MoServerDatagram { uint32 counter = 1; }
+message MoServerDatagram {
+	uint32 counter = 1;
+}

@@ -1,2 +1,19 @@
 syntax = "proto3";
-package data;
+package proto;
+
+import "empty.proto";
+
+service MoAuth {
+	rpc register (UserCredentials) returns (Empty);
+	rpc authenticate (UserCredentials) returns (SessionId);
+}
+
+message UserCredentials {
+	string username = 1;
+	string password = 2;
+}
+
+message SessionId {
+	string username = 1;
+	string id = 2;
+}

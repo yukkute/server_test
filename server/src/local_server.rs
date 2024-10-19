@@ -1,10 +1,13 @@
-use std::net::{Ipv4Addr, SocketAddr};
+use std::{
+	net::{Ipv4Addr, SocketAddr},
+	sync::Arc,
+};
 
 use log::{error, info};
 
 use crate::{
 	available_port::get_available_port,
-	pb::mo_talking_server::MoTalkingServer,
+	pb::{mo_auth_server::MoAuthServer, mo_talking_server::MoTalkingServer},
 	runtime::{init_runtime, TOKIO_RUNTIME},
 	services::GrpcServer,
 };
@@ -29,13 +32,16 @@ pub extern "C" fn start_local_server() -> u16 {
 		.build_v1alpha()
 		.unwrap();
 
-	let talking_service = MoTalkingServer::new(GrpcServer { port });
+	let grpc_server = Arc::new(GrpcServer::new(port));
+
+	let talking_service = MoTalkingServer::from_arc(grpc_server.clone());
+	let auth_service = MoAuthServer::from_arc(grpc_server.clone());
 
 	let well_built_server = tonic::transport::Server::builder()
 		.add_service(talking_service)
+		.add_service(auth_service)
 		.add_service(reflection_service);
 
-	// Use the runtime to spawn the server
 	TOKIO_RUNTIME.spawn(async move { well_built_server.serve(addr).await });
 
 	info!("Personal server listening on {}:{}", loopback, port);

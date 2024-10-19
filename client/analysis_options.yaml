@@ -1,3 +1,32 @@
 include: package:flutter_lints/flutter.yaml
 
 linter:
+  rules:
+    - always_put_required_named_parameters_first
+    - avoid_slow_async_io
+    - avoid_types_as_parameter_names
+    - eol_at_end_of_file
+    - literal_only_boolean_expressions
+    - no_wildcard_variable_uses
+    - prefer_double_quotes
+    - prefer_relative_imports    
+    - prefer_final_in_for_each
+    - prefer_final_locals
+    - unnecessary_lambdas
+    - use_super_parameters
+
+analyzer:
+  language:
+    strict-inference: true
+    strict-raw-types: true
+
+  exclude:
+    - '**.g.dart'
+    - lib/generated
+    
+  errors:
+    annotate_overrides: error
+    override_on_non_overriding_member: error
+    invalid_override_of_non_virtual_member: error
+    library_private_types_in_public_api: ignore
+    unused_element: ignore

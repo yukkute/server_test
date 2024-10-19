@@ -1,34 +1,42 @@
-import 'package:flutter/material.dart';
+import "package:flutter/material.dart";
+import "package:grpc/grpc.dart";
 
-import 'package:mo_client/rust_ffi.dart';
+import "generated/protobuf/empty.pb.dart";
+import "generated/protobuf/data.pbgrpc.dart";
+import "generated/protobuf/authentication.pbgrpc.dart";
+
+import "rust_ffi.dart";
 
 void main() {
   final rust = RustBindings();
-
   int port = rust.startLocalServer();
   print(port);
 
-  runApp(const MyApp());
+  runApp(MyApp(port: port));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final int port;
+
+  const MyApp({required this.port, super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: "Flutter Demo",
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: "Flutter Demo Home Page", port: port),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({required this.title, required this.port, super.key});
   final String title;
+  final int port;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -36,11 +44,86 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  late ClientChannel channel;
+  late MoTalkingClient talkingStub;
+  late MoAuthClient authStub;
+  String _username = "";
+  String _password = "";
+  SessionId? _sessionId;
+  bool _fetched = false;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _initializeGrpc();
+  }
+
+  void _initializeGrpc() {
+    channel = ClientChannel(
+      "localhost",
+      port: widget.port,
+      options: const ChannelOptions(
+        credentials: ChannelCredentials.insecure(),
+      ),
+    );
+    talkingStub = MoTalkingClient(channel);
+    authStub = MoAuthClient(channel);
+  }
+
+  Future<void> _register() async {
+    final request = UserCredentials()
+      ..username = _username
+      ..password = _password;
+    try {
+      await authStub.register(request);
+    } finally {}
+  }
+
+  Future<void> _authenticate() async {
+    final request = UserCredentials()
+      ..username = _username
+      ..password = _password;
+
+    try {
+      final response = await authStub.authenticate(request);
+      setState(() {
+        _sessionId = response;
+      });
+    } finally {}
+  }
+
+  Future<void> _getClock() async {
+    try {
+      final stream = talkingStub.requestServerClock(Empty());
+      await for (final _ in stream) {
+        _getData();
+      }
+    } finally {}
+  }
+
+  Future<void> _getData() async {
+    if (_sessionId == null) {
+      await _authenticate();
+    }
+
+    final request = MoClientDatagram()..sessionId = _sessionId!;
+
+    try {
+      final response = await talkingStub.getData(request);
+      setState(() {
+        _fetched = true;
+        _counter = response.counter;
+      });
+    } catch (e) {
+      _sessionId = null;
+      _fetched = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    channel.shutdown();
+    super.dispose();
   }
 
   @override
@@ -54,20 +137,51 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+            const Text("Enter your credentials:"),
+            TextField(
+              decoration: const InputDecoration(labelText: "Username"),
+              onChanged: (value) {
+                setState(() {
+                  _username = value;
+                });
+              },
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            TextField(
+              decoration: const InputDecoration(labelText: "Password"),
+              obscureText: true,
+              onChanged: (value) {
+                setState(() {
+                  _password = value;
+                });
+              },
             ),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _register,
+                  child: const Text("Register"),
+                ),
+                ElevatedButton(
+                  onPressed: _authenticate,
+                  child: const Text("Authenticate"),
+                ),
+              ],
+            ),
+            if (_sessionId != null) ...[
+              const Text("Authenticated successfully!"),
+              Text(
+                "Current counter value: $_counter",
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            ],
+            if (_sessionId != null && !_fetched) ...[
+              ElevatedButton(
+                onPressed: _getClock,
+                child: const Text("Fetch Counter Value"),
+              ),
+            ]
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
