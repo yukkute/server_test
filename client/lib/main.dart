@@ -48,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late MoAuthClient authStub;
   String _username = "";
   String _password = "";
-  SessionId? _sessionId;
+  SessionCredentials? _sessionCredentials;
   bool _fetched = false;
 
   @override
@@ -86,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response = await authStub.authenticate(request);
       setState(() {
-        _sessionId = response;
+        _sessionCredentials = response;
       });
     } finally {}
   }
@@ -101,11 +101,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _getData() async {
-    if (_sessionId == null) {
+    if (_sessionCredentials == null) {
       await _authenticate();
     }
 
-    final request = MoClientDatagram()..sessionId = _sessionId!;
+    final request = MoClientDatagram()..sessionId = _sessionCredentials!;
 
     try {
       final response = await talkingStub.getData(request);
@@ -114,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
         _counter = response.counter;
       });
     } catch (e) {
-      _sessionId = null;
+      _sessionCredentials = null;
       _fetched = false;
     }
   }
@@ -166,14 +166,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
-            if (_sessionId != null) ...[
+            if (_sessionCredentials != null) ...[
               const Text("Authenticated successfully!"),
               Text(
                 "Current counter value: $_counter",
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
             ],
-            if (_sessionId != null && !_fetched) ...[
+            if (_sessionCredentials != null && !_fetched) ...[
               ElevatedButton(
                 onPressed: _getClock,
                 child: const Text("Fetch Counter Value"),

@@ -10,7 +10,7 @@ service MoTalking {
 }
 
 message MoClientDatagram {
-	SessionId session_id = 1;
+	SessionCredentials session_id = 1;
 }
 
 message MoServerDatagram {

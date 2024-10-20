@@ -8,6 +8,7 @@ use sha2::{Digest, Sha256};
 use time::Duration;
 
 type Username = String;
+type PrivateSessionId = String;
 
 #[derive(Default)]
 pub struct UserData {
@@ -15,33 +16,34 @@ pub struct UserData {
 }
 
 impl UserData {
-	const SESSION_ID_LENGTH: usize = 64;
-	const SESSION_DURATION: Duration = Duration::hours(72);
-
-	pub fn register(&mut self, name: &str, password: &str) -> anyhow::Result<()> {
-		let None = self.users.get(name) else {
+	pub fn register(&mut self, username: &str, password: &str) -> anyhow::Result<()> {
+		let None = self.users.get(username) else {
 			return Err(anyhow!("username already taken"));
 		};
 		self.users.insert(
-			name.to_owned(),
+			username.to_owned(),
 			UserEntry {
 				password: StoredPassword::store(password)?,
-				session_id: None,
+				session: None,
 			},
 		);
 
-		info!("Registered new user: {name}");
+		info!("Registered new user: {username}");
 
 		Ok(())
 	}
 
-	pub fn authenticate(&mut self, name: &str, password: &str) -> anyhow::Result<Session> {
+	pub fn authenticate(
+		&mut self,
+		username: &str,
+		password: &str,
+	) -> anyhow::Result<PrivateSessionId> {
 		let error = || {
-			warn!("User failed to authenticate: {name}");
+			warn!("User failed to authenticate: {username}");
 			anyhow!("incorrect username or password")
 		};
 
-		let Some(user) = self.users.get_mut(name) else {
+		let Some(user) = self.users.get_mut(username) else {
 			return Err(error());
 		};
 
@@ -49,49 +51,65 @@ impl UserData {
 			return Err(error());
 		}
 
+		let (id, session) = Session::new();
+
+		user.session = Some(session.clone());
+		info!("Session issued to user: {username}");
+
+		Ok(id)
+	}
+
+	pub fn has_valid_session(&mut self, username: &str, checked_session: &str) -> bool {
+		let Some(user) = self.users.get_mut(username) else {
+			return false;
+		};
+
+		let Some(ref known_session) = user.session else {
+			return false;
+		};
+
+		if known_session.expired() {
+			user.session = None;
+			warn!("Session expired for user: {username}");
+			return false;
+		}
+
+		known_session.is(checked_session)
+	}
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Session {
+	stored: StoredPassword,
+	expires: SystemTime,
+}
+
+impl Session {
+	const SESSION_ID_LENGTH: usize = 64;
+	const SESSION_DURATION: Duration = Duration::hours(72);
+
+	pub fn new() -> (PrivateSessionId, Self) {
 		let id = {
 			let mut id_bytes = [0_u8; Self::SESSION_ID_LENGTH];
 			rand::thread_rng().fill(&mut id_bytes);
 			BASE64_URL_SAFE.encode(id_bytes)
 		};
 
-		let session = Session {
-			value: id,
-			expires: SystemTime::now() + Self::SESSION_DURATION,
-		};
+		let stored = StoredPassword::store_unchecked(&id);
 
-		user.session_id = Some(session.clone());
-		info!("Session issued to user: {name}");
-
-		Ok(session)
+		(
+			id,
+			Session {
+				stored,
+				expires: SystemTime::now() + Self::SESSION_DURATION,
+			},
+		)
 	}
 
-	pub fn has_valid_session(&mut self, name: &str, checked_session: &str) -> bool {
-		let Some(user) = self.users.get_mut(name) else {
-			return false;
-		};
-
-		let Some(ref known_session) = user.session_id else {
-			return false;
-		};
-
-		if known_session.expired() {
-			user.session_id = None;
-			warn!("Session expired for user: {name}");
-			return false;
-		}
-
-		checked_session == known_session.value
+	pub fn is(&self, session: &str) -> bool {
+		self.stored.is(session)
 	}
-}
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Session {
-	pub value: String,
-	pub expires: SystemTime,
-}
-
-impl Session {
 	pub fn expired(&self) -> bool {
 		self.expires < SystemTime::now()
 	}
@@ -100,14 +118,11 @@ impl Session {
 #[derive(Clone, Debug, PartialEq)]
 pub struct UserEntry {
 	password: StoredPassword,
-	session_id: Option<Session>,
+	session: Option<Session>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-struct StoredPassword {
-	password_hash: String,
-	salt: String,
-}
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct StoredPassword(String, String);
 
 impl StoredPassword {
 	const SALT_LEN: usize = 16;
@@ -117,13 +132,13 @@ impl StoredPassword {
 
 	fn store(password: &str) -> anyhow::Result<Self> {
 		match password.len() {
-			0..Self::MIN_PASSWD_LEN => {
+			i if i < Self::MIN_PASSWD_LEN => {
 				return Err(anyhow!(
 					"password must be at least {} characters long",
 					Self::MIN_PASSWD_LEN
 				));
 			}
-			Self::MAX_PASSWD_LEN.. => {
+			i if i > Self::MAX_PASSWD_LEN => {
 				return Err(anyhow!(
 					"password must be at most {} characters long",
 					Self::MAX_PASSWD_LEN
@@ -131,7 +146,10 @@ impl StoredPassword {
 			}
 			_ => {}
 		}
+		Ok(Self::store_unchecked(password))
+	}
 
+	fn store_unchecked(password: &str) -> Self {
 		let salt: String = {
 			let salt_bytes: [u8; Self::SALT_LEN] = rand::thread_rng().gen();
 			BASE64_URL_SAFE.encode(salt_bytes)
@@ -144,18 +162,15 @@ impl StoredPassword {
 			BASE64_URL_SAFE.encode(result)
 		};
 
-		Ok(StoredPassword {
-			password_hash,
-			salt,
-		})
+		StoredPassword(password_hash, salt)
 	}
 
 	fn is(&self, password: &str) -> bool {
 		let mut hasher = Sha256::new();
-		hasher.update(format!("{}{}", password, self.salt));
+		hasher.update(format!("{}{}", password, self.1));
 		let result = hasher.finalize();
 
-		self.password_hash == BASE64_URL_SAFE.encode(result)
+		self.0 == BASE64_URL_SAFE.encode(result)
 	}
 }
 
@@ -205,7 +220,7 @@ mod tests {
 		assert!(received_token.is_ok());
 		let received_token = received_token.unwrap();
 
-		assert!(userdata.has_valid_session("alice", &received_token.value));
+		assert!(userdata.has_valid_session("alice", &received_token));
 	}
 
 	#[test]

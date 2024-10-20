@@ -11,7 +11,7 @@ use crate::{
 	data::ServerData,
 	pb::{
 		mo_auth_server::MoAuth, mo_talking_server::MoTalking, Empty, MoClientDatagram,
-		MoServerDatagram, SessionId, UserCredentials,
+		MoServerDatagram, SessionCredentials, UserCredentials,
 	},
 	runtime::TOKIO_RUNTIME,
 };
@@ -52,7 +52,7 @@ impl GrpcServer {
 		grpc
 	}
 
-	fn session_valid(&self, s: Option<SessionId>) -> bool {
+	fn session_valid(&self, s: Option<SessionCredentials>) -> bool {
 		let Some(s) = s else { return false };
 
 		let mut server_data = self.server_data.lock().unwrap();
@@ -126,14 +126,14 @@ impl MoAuth for GrpcServer {
 	async fn authenticate(
 		&self,
 		request: Request<UserCredentials>,
-	) -> Result<Response<SessionId>, Status> {
+	) -> Result<Response<SessionCredentials>, Status> {
 		let request = &request.into_inner();
 		let a = &mut self.server_data.lock().unwrap().userdata;
 
 		match a.authenticate(&request.username, &request.password) {
-			Ok(session) => Ok(Response::new(SessionId {
+			Ok(id) => Ok(Response::new(SessionCredentials {
 				username: request.username.clone(),
-				id: session.value,
+				id,
 			})),
 			Err(e) => Err(Status::unauthenticated(format!(
 				"auth failed with error: {e:?}"
