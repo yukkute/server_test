@@ -9,8 +9,7 @@ import "rust_ffi.dart";
 
 void main() {
   final rust = RustBindings();
-  int port = rust.startLocalServer();
-  print(port);
+  final int port = rust.startLocalServer();
 
   runApp(MyApp(port: port));
 }

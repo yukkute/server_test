@@ -1,5 +1,5 @@
-import 'dart:ffi';
-import 'dart:io';
+import "dart:ffi";
+import "dart:io";
 
 typedef StartLocalServerNative = Uint16 Function();
 typedef StartLocalServerDart = int Function();
@@ -10,12 +10,12 @@ class RustBindings {
 
   RustBindings() {
     if (Platform.isLinux || Platform.isAndroid) {
-      _lib = DynamicLibrary.open('libmoreonigiri_server.so');
+      _lib = DynamicLibrary.open("libmoreonigiri_server.so");
     } else if (Platform.isWindows) {
-      _lib = DynamicLibrary.open('moreonigiri_server.dll');
+      _lib = DynamicLibrary.open("moreonigiri_server.dll");
     }
     startLocalServer = _lib
-        .lookup<NativeFunction<StartLocalServerNative>>('start_local_server')
+        .lookup<NativeFunction<StartLocalServerNative>>("start_local_server")
         .asFunction();
   }
 }

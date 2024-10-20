@@ -1,8 +1,9 @@
-use log::info;
 use std::{
 	pin::Pin,
 	sync::{Arc, Mutex},
 };
+
+use log::info;
 use tokio::time::Duration;
 use tonic::{Request, Response, Status};
 
@@ -31,8 +32,8 @@ impl GrpcServer {
 		let grpc = Self {
 			port,
 			clock,
-			server_data: Default::default(),
-			counter: Default::default(),
+			server_data: Mutex::default(),
+			counter: Arc::default(),
 		};
 
 		let c = grpc.counter.clone();
@@ -78,7 +79,7 @@ impl MoTalking for GrpcServer {
 
 		TOKIO_RUNTIME.spawn(async move {
 			loop {
-				let _ = clock_reciever.recv().await.unwrap();
+				clock_reciever.recv().await.unwrap();
 
 				if tx.send(Ok(Empty {})).await.is_err() {
 					break;
@@ -100,7 +101,7 @@ impl MoTalking for GrpcServer {
 
 		//let counter = rand::thread_rng().gen_range(0..100);
 		let response = MoServerDatagram {
-			counter: *self.counter.lock().unwrap() as u32,
+			counter: u32::from(*self.counter.lock().unwrap()),
 		};
 
 		Ok(Response::new(response))
@@ -131,7 +132,7 @@ impl MoAuth for GrpcServer {
 
 		match a.authenticate(&request.username, &request.password) {
 			Ok(session) => Ok(Response::new(SessionId {
-				username: request.username.to_owned(),
+				username: request.username.clone(),
 				id: session.value,
 			})),
 			Err(e) => Err(Status::unauthenticated(format!(
