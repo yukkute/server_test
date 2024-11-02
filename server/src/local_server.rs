@@ -12,8 +12,12 @@ use crate::{
 	services::GrpcServer,
 };
 
-#[no_mangle]
-pub extern "C" fn start_local_server() -> u16 {
+#[unsafe(no_mangle)]
+unsafe extern "C" fn start_local_server() -> u16 {
+	start_local_server_rust()
+}
+
+fn start_local_server_rust() -> u16 {
 	init_runtime();
 
 	let Some(port) = get_available_port() else {
@@ -44,7 +48,7 @@ pub extern "C" fn start_local_server() -> u16 {
 
 	TOKIO_RUNTIME.spawn(async move { well_built_server.serve(addr).await });
 
-	info!("Personal server listening on {}:{}", loopback, port);
+	info!("Personal server listening on {loopback}:{port}");
 
 	port
 }

@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 #![allow(clippy::module_name_repetitions)]
+#![forbid(future_incompatible)]
 
-mod generated; // subdirectory generated
+mod generated; // subdirectory "server/src/generated"
 
 mod available_port;
 mod bank;

@@ -110,7 +110,10 @@ impl MoTalking for GrpcServer {
 
 #[tonic::async_trait]
 impl MoAuth for GrpcServer {
-	async fn register(&self, request: Request<UserCredentials>) -> Result<Response<Empty>, Status> {
+	async fn register(
+		&self,
+		request: Request<UserCredentials>,
+	) -> Result<Response<Empty>, Status> {
 		let request = &request.into_inner();
 		let a = &mut self.server_data.lock().unwrap().userdata;
 

@@ -62,8 +62,7 @@ mod tests {
 
 		let multicast_addr: SocketAddrV4 = "233.252.0.0:4445".parse().unwrap();
 		let listener = UdpSocket::bind("0.0.0.0:4445").await.unwrap();
-		listener
-			.join_multicast_v4(*multicast_addr.ip(), "0.0.0.0".parse().unwrap())
+		listener.join_multicast_v4(*multicast_addr.ip(), "0.0.0.0".parse().unwrap())
 			.unwrap();
 
 		// -----

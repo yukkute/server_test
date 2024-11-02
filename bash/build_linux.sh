@@ -8,17 +8,17 @@ read -p "Do you want a clean-build? (Y/n): " clean_build
 clean_build=${clean_build:-Y}
 
 if [ "$clean_build" = "y" ] || [ "$clean_build" = "Y" ]; then
-    echo -e -n "\n\033[37m🧹 Cleaning build directories... "
+	echo -e -n "\n\033[37m🧹 Cleaning build directories... "
 
-    # Clean Flutter build directory
-    rm -rf ../client/lib/generated/protobuf
+	# Clean Flutter build directory
+	rm -rf ../client/lib/generated/protobuf
 
-    cd ../client
-    flutter clean >/dev/null
+	cd ../client
+	flutter clean >/dev/null
 
-    cd ../server
-    cargo clean -q
-    echo -e "cleaned\033[0m"
+	cd ../server
+	cargo clean -q
+	echo -e "cleaned\033[0m"
 fi
 
 # Build Flutter client
@@ -29,21 +29,21 @@ protoc --proto_path=proto --dart_out=grpc:client/lib/generated/protobuf proto/*.
 cd client
 echo -e "\n🐦 \033[1;37mBuilding Flutter client...\033[0m"
 flutter build linux --release || {
-    echo -e "\n😔 An error occurred while building the Flutter client."
-    echo -e "👉 Try running the script with \033[1m\033[31mclean-build\033[0m option.\n"
-    exit 1
+	echo -e "\n😔 An error occurred while building the Flutter client."
+	echo -e "👉 Try running the script with \033[1m\033[31mclean-build\033[0m option.\n"
+	exit 1
 }
 
 # Build Rust server
 cd ../server
 echo -e "\n🦀 \033[1;37mBuilding Rust server...\033[0m\n"
 cargo build \
-    --release \
-    --target x86_64-unknown-linux-gnu \
+	--release \
+	--target x86_64-unknown-linux-gnu \
 || {
-    echo -e "\n😔 An error occurred while building the Rust server."
-    echo -e "👉 Try running the script with \033[1m\033[31mclean-build\033[0m option.\n"
-    exit 1
+	echo -e "\n😔 An error occurred while building the Rust server."
+	echo -e "👉 Try running the script with \033[1m\033[31mclean-build\033[0m option.\n"
+	exit 1
 }
 
 # Copy the shared library to the Flutter client's bundle directory
