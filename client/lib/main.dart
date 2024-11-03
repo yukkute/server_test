@@ -7,8 +7,7 @@ import "generated/protobuf/authentication.pbgrpc.dart";
 
 import "rust_ffi.dart";
 import "user_registry.dart";
-import "w_user_register.dart";
-import "w_users_registry.dart";
+import "w_user_screen.dart";
 
 void main() async {
   final rust = RustBindings();
@@ -26,28 +25,51 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final int port;
+  final UserRegistry registry;
 
   const MyApp({required this.port, required this.registry, super.key});
 
-  final UserRegistry registry;
-
   @override
   Widget build(BuildContext context) {
+    final color = Colors.lightGreen.shade700;
     return MaterialApp(
-        title: "Flutter Demo",
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
+      title: "Flutter Demo",
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: color),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: color,
+          brightness: Brightness.dark,
         ),
-        home: Scaffold(
-            body: Column(
-          children: [
-            MyHomePage(title: "Flutter Demo Home Page", port: port),
-            Spacer(),
-            Expanded(child: WUsersRegistry(registry: registry)),
-            WUserRegistration(registry: registry),
-          ],
-        )));
+        useMaterial3: true,
+      ),
+      home: Scaffold(
+        // body: WUserScreen(registry: registry),
+        body: Builder(
+          builder: (context) {
+            final button = ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => WUserScreen(registry: registry),
+                  ),
+                );
+              },
+              icon: Icon(Icons.person),
+              label: Text("Users"),
+            );
+
+            return Center(
+              child: button,
+            );
+          },
+        ),
+        floatingActionButtonLocation:
+            FloatingActionButtonLocation.miniCenterTop,
+      ),
+    );
   }
 }
 

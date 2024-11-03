@@ -43,8 +43,8 @@ abstract class _User with Store {
       : _maybePassword = password,
         _key = key ?? generateRandomString(64);
 
-  String get password => _maybePassword ?? _key;
   bool get hasPassword => _maybePassword != null;
+  String get password => _maybePassword ?? _key;
 
   set password(String? p) => _maybePassword = p;
 

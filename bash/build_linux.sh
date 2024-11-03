@@ -34,7 +34,7 @@ protoc --proto_path=proto --dart_out=grpc:client/lib/generated/protobuf proto/*.
 cd client
 echo -e "\n🐦 \033[1;37mBuilding Flutter client...\033[0m"
 
-flutter pub run build_runner build
+dart run build_runner build
 flutter build linux --release || {
 	echo -e "\n😔 An error occurred while building the Flutter client."
 	echo -e "👉 Try running the script with \033[1m\033[31mclean-build\033[0m option.\n"
