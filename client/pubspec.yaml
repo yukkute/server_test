@@ -8,15 +8,19 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_mobx: ^2.2.1+1
   grpc: ^4.0.1
+  mobx: ^2.4.0
   protobuf: ^3.1.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   build_runner: ^2.4.13
   protoc_plugin: ^21.1.2
+  mobx_codegen: ^2.6.2
+  
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^5.0.0
 
 flutter:

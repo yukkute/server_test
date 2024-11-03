@@ -17,13 +17,25 @@ unsafe extern "C" fn start_local_server() -> u16 {
 	start_local_server_rust()
 }
 
+static mut STARTED: bool = false;
+static mut PORT: u16 = 0;
+
 fn start_local_server_rust() -> u16 {
+	unsafe {
+		if STARTED {
+			return PORT;
+		};
+		STARTED = true;
+	}
+
 	init_runtime();
 
 	let Some(port) = get_available_port() else {
 		error!("could not bind a port");
 		panic!();
 	};
+
+	unsafe { PORT = port };
 
 	let loopback = Ipv4Addr::LOCALHOST;
 	let addr: SocketAddr = format!("{loopback}:{port}").parse().unwrap();
