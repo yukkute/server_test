@@ -6,14 +6,14 @@ import "generated/protobuf/data.pbgrpc.dart";
 import "generated/protobuf/authentication.pbgrpc.dart";
 
 import "rust_ffi.dart";
-import "user_registry.dart";
+import "saves.dart";
 import "w_user_screen.dart";
 
 void main() async {
   final rust = RustBindings();
   final int port = rust.startLocalServer();
 
-  final registry = await loadUserRegistry();
+  final registry = await initSaves();
 
   runApp(MyApp(
     registry: registry,
@@ -25,7 +25,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final int port;
-  final UserRegistry registry;
+  final Saves registry;
 
   const MyApp({required this.port, required this.registry, super.key});
 
@@ -61,8 +61,15 @@ class MyApp extends StatelessWidget {
               label: Text("Users"),
             );
 
-            return Center(
-              child: button,
+            final server = MyHomePage(title: "", port: port);
+
+            return Column(
+              children: [
+                Center(
+                  child: button,
+                ),
+                server,
+              ],
             );
           },
         ),

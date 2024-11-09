@@ -57,7 +57,10 @@ impl GrpcServer {
 
 		let mut server_data = self.server_data.lock().unwrap();
 
-		server_data.userdata.has_valid_session(&s.username, &s.id)
+		server_data
+			.userdata
+			.validate_session(&s.username, &s.id)
+			.is_ok()
 	}
 }
 
@@ -68,11 +71,8 @@ impl MoTalking for GrpcServer {
 
 	async fn request_server_clock(
 		&self,
-		request: Request<Empty>,
+		_request: Request<Empty>,
 	) -> Result<Response<Self::RequestServerClockStream>, Status> {
-		info!("Requested clock!");
-		info!("{request:?}");
-
 		let (tx, rx) = tokio::sync::mpsc::channel::<Result<Empty, Status>>(16);
 
 		let mut clock_reciever = self.clock.subscribe();
@@ -95,6 +95,8 @@ impl MoTalking for GrpcServer {
 		&self,
 		request: Request<MoClientDatagram>,
 	) -> Result<Response<MoServerDatagram>, Status> {
+		//info!("{:#?}", request);
+
 		if !self.session_valid(request.into_inner().session_id) {
 			return Err(Status::unauthenticated("authentication failed"));
 		};

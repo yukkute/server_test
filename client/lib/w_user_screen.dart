@@ -1,20 +1,20 @@
 import "package:flutter/material.dart";
 import "package:flutter_mobx/flutter_mobx.dart";
 
-import "user.dart";
-import "user_registry.dart";
+import "save.dart";
+import "saves.dart";
 import "w_add_user.dart";
 import "w_mobx_counter.dart";
 import "w_users_registry.dart";
 
 class WUserScreen extends StatelessWidget {
-  final UserRegistry registry;
+  final Saves registry;
 
   const WUserScreen({required this.registry, super.key});
 
   Widget activeUser(BuildContext context) {
     return Observer(builder: (_) {
-      late final User user;
+      late final Save user;
       try {
         user = registry.users[0];
       } catch (_) {
@@ -29,7 +29,7 @@ class WUserScreen extends StatelessWidget {
       final title = Row(children: [
         Expanded(
           child: Text(
-            user.username,
+            user.name,
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 20,

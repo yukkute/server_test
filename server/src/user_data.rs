@@ -10,20 +10,25 @@ use time::Duration;
 type Username = String;
 type PrivateSessionId = String;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct UserData {
 	users: HashMap<Username, UserEntry>,
+	password_config: PasswordConfig,
 }
 
 impl UserData {
 	pub fn register(&mut self, username: &str, password: &str) -> anyhow::Result<()> {
-		let None = self.users.get(username) else {
+		if self.users.contains_key(username) {
 			return Err(anyhow!("username already taken"));
 		};
+
 		self.users.insert(
 			username.to_owned(),
 			UserEntry {
-				password: StoredPassword::store(password)?,
+				password: StoredPassword::store(
+					password,
+					Some(self.password_config),
+				)?,
 				session: None,
 			},
 		);
@@ -53,28 +58,37 @@ impl UserData {
 
 		let (id, session) = Session::new();
 
-		user.session = Some(session.clone());
+		user.session = Some(session);
 		info!("Session issued to user: {username}");
 
 		Ok(id)
 	}
 
-	pub fn has_valid_session(&mut self, username: &str, checked_session: &str) -> bool {
+	pub fn validate_session(&mut self, username: &str, session_id: &str) -> anyhow::Result<()> {
 		let Some(user) = self.users.get_mut(username) else {
-			return false;
+			return Err(anyhow!("no such user: {username}"));
 		};
 
+		let further_error = anyhow!("invalid session: {username}");
+
 		let Some(ref known_session) = user.session else {
-			return false;
+			return Err(further_error);
 		};
 
 		if known_session.expired() {
 			user.session = None;
+
 			warn!("Session expired for user: {username}");
-			return false;
+
+			return Err(further_error);
 		}
 
-		known_session.is(checked_session)
+		if !known_session.id_is(session_id) {
+			return Err(further_error);
+		}
+
+		// Session is valid
+		Ok(())
 	}
 }
 
@@ -86,7 +100,7 @@ pub struct Session {
 
 impl Session {
 	const SESSION_ID_LENGTH: usize = 64;
-	const SESSION_DURATION: Duration = Duration::hours(72);
+	const SESSION_DURATION: Duration = Duration::seconds(5);
 
 	pub fn new() -> (PrivateSessionId, Self) {
 		let id = {
@@ -106,7 +120,7 @@ impl Session {
 		)
 	}
 
-	pub fn is(&self, session: &str) -> bool {
+	pub fn id_is(&self, session: &str) -> bool {
 		self.stored.is(session)
 	}
 
@@ -121,31 +135,43 @@ pub struct UserEntry {
 	session: Option<Session>,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct PasswordConfig {
+	min_length: usize,
+	max_length: usize,
+}
+
+impl Default for PasswordConfig {
+	fn default() -> Self {
+		Self {
+			min_length: 0,
+			max_length: 64,
+		}
+	}
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct StoredPassword(String, String);
 
 impl StoredPassword {
 	const SALT_LEN: usize = 16;
 
-	const MIN_PASSWD_LEN: usize = 5;
-	const MAX_PASSWD_LEN: usize = 64;
-
-	fn store(password: &str) -> anyhow::Result<Self> {
-		match password.len() {
-			i if i < Self::MIN_PASSWD_LEN => {
+	fn store(password: &str, config: Option<PasswordConfig>) -> anyhow::Result<Self> {
+		if let Some(config) = config {
+			if password.len() < config.min_length {
 				return Err(anyhow!(
 					"password must be at least {} characters long",
-					Self::MIN_PASSWD_LEN
+					config.min_length
 				));
 			}
-			i if i > Self::MAX_PASSWD_LEN => {
+			if password.len() > config.max_length {
 				return Err(anyhow!(
 					"password must be at most {} characters long",
-					Self::MAX_PASSWD_LEN
+					config.max_length
 				));
 			}
-			_ => {}
 		}
+
 		Ok(Self::store_unchecked(password))
 	}
 
@@ -179,9 +205,11 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn store_passwords() {
-		let entry = StoredPassword::store("secure password").unwrap();
-		let second_entry = StoredPassword::store("secure password").unwrap();
+	fn same_passwords() {
+		let same_password = "SAME PASSWORD IS USED";
+
+		let entry = StoredPassword::store(same_password, None).unwrap();
+		let second_entry = StoredPassword::store(same_password, None).unwrap();
 
 		assert_ne!(entry, second_entry);
 
@@ -189,19 +217,25 @@ mod tests {
 	}
 
 	#[test]
-	fn identify_same_password() {
-		let entry = StoredPassword::store("secure password").unwrap();
+	fn is_password_check() {
+		let entry = StoredPassword::store("secure password", None).unwrap();
 		assert!(entry.is("secure password"));
 	}
 
 	#[test]
 	fn invalid_len() {
-		let entry = StoredPassword::store("shrt");
+		let constraints = Some(PasswordConfig {
+			min_length: 10,
+			max_length: 10,
+		});
+
+		let entry = StoredPassword::store("short", constraints);
 		assert!(entry.is_err());
 
 		let second_entry = StoredPassword::store(
 			"Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 			Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+			constraints,
 		);
 		assert!(second_entry.is_err());
 	}
@@ -220,7 +254,7 @@ mod tests {
 		assert!(received_token.is_ok());
 		let received_token = received_token.unwrap();
 
-		assert!(userdata.has_valid_session("alice", &received_token));
+		assert!(userdata.validate_session("alice", &received_token).is_ok());
 	}
 
 	#[test]

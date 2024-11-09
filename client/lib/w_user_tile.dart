@@ -2,16 +2,16 @@ import "package:flutter/gestures.dart";
 import "package:flutter/material.dart";
 import "package:flutter_slidable/flutter_slidable.dart";
 
-import "user.dart";
-import "user_registry.dart";
+import "save.dart";
+import "saves.dart";
 import "w_mobx_counter.dart";
 
-class WUserTile extends StatefulWidget {
-  final UserRegistry registry;
+class WSaveSlot extends StatefulWidget {
+  final Saves registry;
 
   final BuildContext context;
   final int index;
-  const WUserTile({
+  const WSaveSlot({
     required this.registry,
     required this.context,
     required this.index,
@@ -19,17 +19,17 @@ class WUserTile extends StatefulWidget {
   });
 
   @override
-  _WUserTileState createState() => _WUserTileState();
+  _WSaveSlotState createState() => _WSaveSlotState();
 }
 
-class _WUserTileState extends State<WUserTile> with TickerProviderStateMixin {
+class _WSaveSlotState extends State<WSaveSlot> with TickerProviderStateMixin {
   late final AnimationController _circleController;
   late final Animation<double> _circleAnimation;
   late final SlidableController _slideController;
 
   @override
   Widget build(BuildContext context) {
-    late final User user;
+    late final Save user;
     try {
       user = widget.registry.users[widget.index + 1];
     } catch (_) {
@@ -39,7 +39,7 @@ class _WUserTileState extends State<WUserTile> with TickerProviderStateMixin {
     final title = Row(children: [
       Expanded(
         child: Text(
-          user.username,
+          user.name,
           style: const TextStyle(overflow: TextOverflow.ellipsis),
           maxLines: 1,
         ),
@@ -75,7 +75,7 @@ class _WUserTileState extends State<WUserTile> with TickerProviderStateMixin {
         motion: const ScrollMotion(),
         children: [
           SlidableAction(
-            onPressed: (_) => widget.registry.removeUser(user.username),
+            onPressed: (_) => widget.registry.removeUser(user.name),
             backgroundColor: const Color.fromARGB(255, 249, 73, 73),
             foregroundColor: Colors.white,
             icon: Icons.delete_outlined,
@@ -127,7 +127,7 @@ class _WUserTileState extends State<WUserTile> with TickerProviderStateMixin {
     });
   }
 
-  void _startLongPress(User user) {
+  void _startLongPress(Save user) {
     if (_slideController.ratio != 0) return;
     setState(() {
       _circleController.forward();

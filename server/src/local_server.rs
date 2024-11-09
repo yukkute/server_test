@@ -1,15 +1,18 @@
 use std::{
 	net::{Ipv4Addr, SocketAddr},
-	sync::Arc,
+	sync::{
+		atomic::{AtomicBool, AtomicU16, Ordering},
+		Arc,
+	},
 };
 
 use log::{error, info};
 
 use crate::{
 	available_port::get_available_port,
+	grpc::GrpcServer,
 	pb::{mo_auth_server::MoAuthServer, mo_talking_server::MoTalkingServer},
 	runtime::{init_runtime, TOKIO_RUNTIME},
-	services::GrpcServer,
 };
 
 #[unsafe(no_mangle)]
@@ -17,16 +20,15 @@ unsafe extern "C" fn start_local_server() -> u16 {
 	start_local_server_rust()
 }
 
-static mut STARTED: bool = false;
-static mut PORT: u16 = 0;
+static STARTED: AtomicBool = AtomicBool::new(false);
+static PORT: AtomicU16 = AtomicU16::new(0);
 
 fn start_local_server_rust() -> u16 {
-	unsafe {
-		if STARTED {
-			return PORT;
-		};
-		STARTED = true;
-	}
+	let f = Ordering::SeqCst;
+	if STARTED.load(f) {
+		return PORT.load(f);
+	};
+	STARTED.store(true, f);
 
 	init_runtime();
 
@@ -35,7 +37,7 @@ fn start_local_server_rust() -> u16 {
 		panic!();
 	};
 
-	unsafe { PORT = port };
+	PORT.store(port, Ordering::SeqCst);
 
 	let loopback = Ipv4Addr::LOCALHOST;
 	let addr: SocketAddr = format!("{loopback}:{port}").parse().unwrap();

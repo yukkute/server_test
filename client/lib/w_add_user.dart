@@ -1,11 +1,11 @@
 import "package:flutter/material.dart";
 
-import "user.dart";
-import "user_registry.dart";
+import "save.dart";
+import "saves.dart";
 import "w_emoji_selector.dart";
 
 class WAddUser extends StatefulWidget {
-  final UserRegistry registry;
+  final Saves registry;
 
   const WAddUser({required this.registry, super.key});
 
@@ -29,7 +29,7 @@ class _WAddUserState extends State<WAddUser> {
         autocorrect: false,
         controller: _usernameController,
         decoration: InputDecoration(
-          labelText: "Username",
+          labelText: "Name",
           border: InputBorder.none,
         ),
         validator: _validateUsername,
@@ -86,12 +86,11 @@ class _WAddUserState extends State<WAddUser> {
 
   void _registerUser() {
     if (_formKey.currentState?.validate() ?? false) {
-      final username = _usernameController.text;
+      final name = _usernameController.text;
 
-      final user = User(
-        username: username,
+      final user = Save(
+        name: name,
         emoji: _selectedEmoji,
-        password: null,
       );
       widget.registry.addUser(user);
 

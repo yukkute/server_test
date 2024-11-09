@@ -4,8 +4,6 @@ set -e
 cd "$(dirname "$(realpath "$0")")"
 cd ..
 
-export DOCKER_BUILDKIT=1
-
 IMAGE_NAME="moreonigiri_image"
 CONTAINER_NAME="moreonigiri_container"
 

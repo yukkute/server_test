@@ -1,11 +1,11 @@
 import "package:flutter/material.dart";
 import "package:flutter_mobx/flutter_mobx.dart";
 
-import "user_registry.dart";
+import "saves.dart";
 import "w_user_tile.dart";
 
 class WUsersRegistry extends StatelessWidget {
-  final UserRegistry registry;
+  final Saves registry;
 
   const WUsersRegistry({required this.registry, super.key});
 
@@ -15,7 +15,7 @@ class WUsersRegistry extends StatelessWidget {
       builder: (context) {
         return ListView.builder(
           itemCount: registry.users.length - 1,
-          itemBuilder: (context, index) => WUserTile(
+          itemBuilder: (context, index) => WSaveSlot(
             registry: registry,
             context: context,
             index: index,
