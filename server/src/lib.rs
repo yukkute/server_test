@@ -1,6 +1,11 @@
-#![allow(dead_code)]
-#![allow(clippy::module_name_repetitions)]
-#![forbid(future_incompatible)]
+#![forbid(
+	future_incompatible,
+	clippy::clone_on_ref_ptr,
+	clippy::allow_attributes_without_reason
+)]
+#![deny(clippy::pedantic)]
+#![allow(dead_code, reason = "Development is underway")]
+#![allow(clippy::module_name_repetitions, reason = "Not an issue")]
 
 mod generated; // subdirectory "server/src/generated"
 

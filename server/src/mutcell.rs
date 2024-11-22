@@ -1,7 +1,6 @@
 use std::{
 	cell::UnsafeCell,
 	ops::{Deref, DerefMut},
-	rc::Rc,
 };
 
 #[derive(Debug, Default)]
@@ -15,18 +14,31 @@ where
 //impl<T> !Sync for MutCell<T> {}
 
 impl<T> MutCell<T> {
+	#![allow(
+		unsafe_code,
+		clippy::mut_from_ref,
+		reason = "Uses unsafe code to allow shared mutable ownership"
+	)]
+
 	pub fn new(value: T) -> Self {
 		MutCell {
 			value: UnsafeCell::new(value),
 		}
 	}
 
-	#[allow(clippy::mut_from_ref)]
 	pub fn get_mut(&self) -> &mut T {
+		// SAFETY:
+		// No safety measures are taken explicitly within Rust code.
+		// This code relies on UnsafeCell being excluded from deref caching in clang compiler
+		// If it is unsound, we cannot really do much
 		unsafe { &mut *self.value.get() }
 	}
 
 	pub fn get(&self) -> &T {
+		// SAFETY:
+		// No safety measures are taken explicitly within Rust code.
+		// This code relies on UnsafeCell being excluded from deref caching in clang compiler
+		// If it is unsound, we cannot really do much
 		unsafe { &*self.value.get() }
 	}
 }
@@ -53,12 +65,6 @@ impl<T> DerefMut for MutCell<T> {
 	}
 }
 
-pub trait MakeShared {
-	fn make_shared() -> Rc<MutCell<Self>>
-	where
-		Self: Sized;
-}
-
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -75,6 +81,7 @@ mod tests {
 			mutable_referennce.push_str(", world!");
 		}
 
+		// The same reference has different value noew (expecting no deref caching optimization)
 		assert_eq!(shared_reference, "Hello, world!");
 	}
 }

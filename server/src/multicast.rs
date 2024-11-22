@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{
 	net::SocketAddrV4,
 	sync::atomic::{AtomicBool, Ordering},

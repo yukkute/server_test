@@ -52,8 +52,8 @@ fn start_local_server_rust() -> u16 {
 
 	let grpc_server = Arc::new(GrpcServer::new(port));
 
-	let talking_service = MoTalkingServer::from_arc(grpc_server.clone());
-	let auth_service = MoAuthServer::from_arc(grpc_server.clone());
+	let talking_service = MoTalkingServer::from_arc(Arc::clone(&grpc_server));
+	let auth_service = MoAuthServer::from_arc(Arc::clone(&grpc_server));
 
 	let well_built_server = tonic::transport::Server::builder()
 		.add_service(talking_service)

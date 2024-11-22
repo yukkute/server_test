@@ -101,8 +101,8 @@ mod tests {
 		let display1 = StockmarketDisplay::new(10.0);
 		let display2 = StockmarketDisplay::new(0.5);
 
-		bank.connect_events(Rc::downgrade(&(display1.clone() as Rc<dyn BankEvents>)));
-		bank.connect_events(Rc::downgrade(&(display2.clone() as Rc<dyn BankEvents>)));
+		bank.connect_events(Rc::downgrade(&(Rc::clone(&display1) as Rc<dyn BankEvents>)));
+		bank.connect_events(Rc::downgrade(&(Rc::clone(&display2) as Rc<dyn BankEvents>)));
 
 		bank.earn(100.0);
 		bank.spend(30.0);

@@ -3,7 +3,6 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
-use log::info;
 use tokio::time::Duration;
 use tonic::{Request, Response, Status};
 
@@ -36,7 +35,7 @@ impl GrpcServer {
 			counter: Arc::default(),
 		};
 
-		let c = grpc.counter.clone();
+		let c = Arc::clone(&grpc.counter);
 
 		TOKIO_RUNTIME.spawn(async move {
 			loop {
