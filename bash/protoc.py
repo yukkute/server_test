@@ -28,7 +28,7 @@ def generate_protobuf_files():
         subprocess.run(
             [
                 "protoc",
-                f'--proto_path={project_root / "proto"}',
+                f"--proto_path={project_root / "proto"}",
                 f"--dart_out=grpc:{protobuf_gen_dir}",
                 *files,
             ],
