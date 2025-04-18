@@ -17,7 +17,7 @@ def build_flutter_client():
     c = "\033[1;36m"
     r = "\033[0m"
 
-    message = f"Building  {c}Flutter{r} 🐦 client"
+    message = f"Building {c}Flutter{r} 🐦 client"
     task = Task(message)
 
     try:

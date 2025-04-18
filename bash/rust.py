@@ -17,7 +17,7 @@ def build_rust_server():
     c = "\033[1;38;5;214m"
     r = "\033[0m"
 
-    message = f"Building  {c}Rust{r} 🦀 server"
+    message = f"Building {c}Rust{r} 🦀 server"
     task = Task(message)
 
     try:

@@ -1,6 +1,14 @@
 targets:
   $default:
     builders:
+      protoc_builder:
+        options:
+          root_dir: "lib/generated/proto_symlink/"
+          proto_paths:
+            - "lib/generated/proto_symlink/"
+          out_dir: "lib/generated/protobuf"
+          grpc: true
+          use_installed_protoc: true
       source_gen|combining_builder:
         generate_for:
           - lib/**.dart

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import clean
-import protoc
-import mobx
+import dart_build_runner
 import flutter
 import rust
 
@@ -13,8 +12,7 @@ def main():
     print(f"🏗️ {c}Executing build script...{r}\n")
 
     clean.clean_build_directories(ask=True)
-    protoc.generate_protobuf_files()
-    mobx.compile_mobx()
+    dart_build_runner.run_build_runner()
     flutter.build_flutter_client()
     rust.build_rust_server()
     rust.copy_shared_lib()

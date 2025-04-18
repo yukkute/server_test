@@ -25,6 +25,8 @@ def clean_build_directories(ask=False):
     protobuf_dir = client_generated_dir / "protobuf"
     mobx_dir = client_generated_dir / "mobx"
 
+    proto_symlink = client_generated_dir / "proto_symlink"
+
     dirs_to_clean = [protobuf_dir, mobx_dir]
 
     message = f"Cleaning 🧹 build directories"
@@ -32,6 +34,9 @@ def clean_build_directories(ask=False):
 
     try:
         task.start()
+
+        if proto_symlink.exists() and proto_symlink.is_symlink():
+            proto_symlink.unlink()
 
         for dir_path in dirs_to_clean:
             if dir_path.exists():
@@ -60,7 +65,7 @@ def clean_build_directories(ask=False):
 
 
 def main():
-    clean_build_directories(ask=True)
+    clean_build_directories(ask=False)
 
 
 if __name__ == "__main__":

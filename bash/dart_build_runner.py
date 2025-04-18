@@ -7,26 +7,35 @@ import helpers as h
 from task import Task
 
 
-def compile_mobx():
-    """Compile MobX bindings"""
+def run_build_runner():
+    """Compile Protobuf and MobX bindings"""
     project_root = h.project_root()
+    os.chdir(project_root)
 
     client_dir = project_root / "client"
-    os.chdir(client_dir)
+    proto_source = project_root / "proto"
+    proto_symlink_destination = client_dir / "lib" / "generated" / "proto_symlink"
 
-    c = "\033[1;33m"
+    c_mobx = "\033[1;33m"
+    c_proto = "\033[1;97m"
     r = "\033[0m"
 
-    message = f"Compiling {c}MobX{r} ⚡ bindings"
+    message = f"Compiling {c_mobx}MobX{r} ⚡ and {c_proto}Protobuf{r} 📊"
     task = Task(message)
 
     try:
         task.start()
+
+        if not proto_symlink_destination.exists():
+            os.symlink(proto_source, proto_symlink_destination)
+
         subprocess.run(
             ["dart", "run", "build_runner", "build"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            cwd=project_root / "client",
         )
+
         task.finish()
 
     except Exception as e:
@@ -35,7 +44,7 @@ def compile_mobx():
 
 
 def main():
-    compile_mobx()
+    run_build_runner()
 
 
 if __name__ == "__main__":
