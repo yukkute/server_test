@@ -10,6 +10,7 @@ name = "moreonigiri_server"
 
 [dependencies]
 anyhow = "1.0.89"
+atomic_float = "1.1.0"
 atty = "0.2.14"
 base64 = "0.22.1"
 float_eq = "1.0.1"
